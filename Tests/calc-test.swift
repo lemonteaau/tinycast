@@ -691,6 +691,23 @@ struct CalcTests {
         expectDisplay("2*50 usd to eur", "92.00 EUR")  // expression on the value side
         expectDisplay("eur to usd", "1.09 USD")  // implied amount of 1
         expectCopy("100 dollars to yen", "15700.00 JPY")
+        expectDisplay("610 aud cny", "2,867.00 CNY")
+        expectDisplay("610 AUD CNY", "2,867.00 CNY")
+        expectExpression("610 aud cny", "610 AUD")
+        expectCopy("610 aud cny", "2867.00 CNY")
+        expectDisplay("10usd cad", "13.60 CAD")
+        expectDisplay("$10 cad", "13.60 CAD")
+        expectDisplay("2*5 usd cad", "13.60 CAD")
+        expectDisplay("10 pounds euros", "11.65 EUR")
+        expectDisplay("1k usd eur", "920.00 EUR")
+        expectDisplay("10 usd cad +", "13.60 CAD")
+        expectError("5 usd npr", "No exchange rate for NPR.")
+        expectErrorWithoutRates("610 aud cny", "Exchange rates unavailable — check your connection.")
+        expectNil("usd cad")
+        expectNil("10 usd kg")
+        expectNil("10 kg usd")
+        expectNil("10 usd nonsense")
+        expectNil("10 usd cad eur")
         // Currency signs, prefixed and suffixed
         expectDisplay("€20 to GBP", "17.17 GBP")
         expectDisplay("20€ to GBP", "17.17 GBP")
@@ -746,8 +763,8 @@ struct CalcTests {
         // `krona` is contested (SEK vs ISK) and deliberately assigned to neither
         expectNil("1 krona to usd")
         // ISO 4217's own name for CNY is "Yuan Renminbi"; CLDR carries only "Chinese Yuan"
-        expectError("1 rmb to usd", "No exchange rate for CNY.")
-        expectError("1 renminbi to usd", "No exchange rate for CNY.")
+        expectDisplay("1 rmb to usd", "0.14 USD")
+        expectDisplay("1 renminbi to usd", "0.14 USD")
         // CLDR signs TWD "NT$", so `ntd` is what Taiwan types; `twd` keeps working
         expectError("1 ntd to usd", "No exchange rate for TWD.")
         expectError("1299 usd to ntd", "No exchange rate for TWD.")
@@ -1743,6 +1760,7 @@ struct CalcTests {
         rates: [
             "USD": 1, "EUR": 0.92, "GBP": 0.79, "JPY": 157, "INR": 83.5, "CAD": 1.36,
             "KRW": 1330, "IDR": 18053, "CHF": 0.81, "AED": 3.6725, "SGD": 1.35,
+            "AUD": 1.5, "CNY": 7.05,
             "BTC": 1.0 / 60_000, "ETH": 1.0 / 2_000, "SOL": 1.0 / 100, "DOGE": 10
         ],
         fetchedAt: Date(timeIntervalSince1970: 1_785_000_000))

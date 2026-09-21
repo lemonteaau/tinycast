@@ -40,13 +40,18 @@ enum CalcCurrency {
     /// The category label used in the mismatch message, mirroring `UnitCategory.displayName`.
     static let categoryName = "Currency"
 
-    /// `expr currency (to|in|->) currency`, shaped like `CalcUnits.parseConversion`, run after it.
     static func parseConversion(_ tokens: [CalcToken], rates: CurrencyRates?) -> ConversionParse? {
         let tokens = amountFirst(tokens)
-        guard tokens.count >= 3, CalcUnits.isConnector(tokens[tokens.count - 2]),
+        guard tokens.count >= 3 else { return nil }
+        let hasConnector = CalcUnits.isConnector(tokens[tokens.count - 2])
+        let sourceIndex = tokens.count - (hasConnector ? 3 : 2)
+        guard
             case .ident(let toName) = tokens[tokens.count - 1],
-            case .ident(let fromName) = tokens[tokens.count - 3]
+            case .ident(let fromName) = tokens[sourceIndex]
         else { return nil }
+        guard hasConnector || (byName[fromName] != nil && byName[toName] != nil) else {
+            return nil
+        }
 
         // A side that is neither currency nor unit is just a typo, and gets no card.
         switch (byName[fromName], byName[toName]) {
@@ -59,7 +64,7 @@ enum CalcCurrency {
             guard let from = CalcUnits.byName[fromName] else { return nil }
             return .mismatch(from: from.category.displayName, to: categoryName)
         case (let from?, let to?):
-            let valueTokens = Array(tokens[0..<(tokens.count - 3)])
+            let valueTokens = Array(tokens[..<sourceIndex])
             let input: Double
             if valueTokens.isEmpty {
                 input = 1

@@ -6,6 +6,10 @@
 also **pure**: the inputs it can't compute — the FX rate table and the Mac's own currency — are passed
 in (see Currency below).
 
+This fork also accepts an amount followed by two currencies without a connector: `610 aud cny`,
+`10usd cad`, `$10 cad`, and `2*5 usd cad`. Both names must resolve to currencies; a bare
+`usd cad` or a mixed `10 usd kg` stays a search. Explicit `to`, `in`, and `->` retain their meaning.
+
 ## Invariants
 
 - **`Model/` (including `CalcDateTime`) stays Foundation-only *and pure*** — no AppKit or SwiftUI, no
@@ -56,7 +60,7 @@ Single ASCII words return immediately: a bare app name, constant or date keyword
 5. **Typed quantity arithmetic** (`10kg + 500g`, `$10 + €5`, `5m * 4m`,
    `100km / 2h to km/h`, `(1hr + 30min) to timespan`)
 6. Explicit unit conversion (`10km to mi`, `m to ft`, `day s`)
-7. Currency conversion (`1 euro to dollars`, `€20 to GBP`, `1 btc to eur`)
+7. Currency conversion (`1 euro to dollars`, `€20 to GBP`, `1 btc to eur`, `610 aud cny`)
 8. Bare-unit auto-conversion (`1m` → feet + inches, `1hr` → 60 min)
 9. Natural-language percent, ratio and list forms (`CalcPercent`)
 
