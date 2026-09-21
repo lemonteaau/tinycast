@@ -1,5 +1,8 @@
 # Release
 
+For this personal fork, see [fork.md](fork.md) and `fork-maintenance.yml`. The process below
+documents upstream releases; the upstream release workflow is not active in this fork.
+
 How a build reaches a user. The local development loop is in [development.md](development.md);
 the signing identity itself is in [signing.md](signing.md).
 

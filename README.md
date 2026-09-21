@@ -1,5 +1,10 @@
 # Tinycast
 
+> **Personal fork: lemonteaau/tinycast.** Supports `610 aud cny` without `to`, with daily
+> upstream sync and tested, signed fork releases. [Download this fork](https://github.com/lemonteaau/tinycast/releases/latest)
+> · [Maintenance and installation](docs/fork.md). The original project documentation follows below;
+> its download and Homebrew links refer to upstream, not this fork.
+
 **A tiny, fully native macOS launcher. One hotkey, everything you reach for all day, under 100 MB of
 RAM.**
 

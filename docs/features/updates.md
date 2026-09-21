@@ -1,5 +1,9 @@
 # Updates
 
+This fork reads releases from `lemonteaau/tinycast` and publishes arm64 stable builds with its
+own fixed signing identity. See [fork.md](../fork.md) for its first-install and release process.
+The upstream release automation and Homebrew casks described below do not publish this fork.
+
 Tinycast checks GitHub Releases once a day, offers the newest release for its own channel in a native
 window with its release notes, installs it and relaunches. There is no Sparkle and no appcast: the
 release feed the website already reads is the feed the app reads.
