@@ -60,7 +60,9 @@ Later fork updates use the normal in-app updater or the named Homebrew upgrade c
 
 Release publication immediately calls the tap's reusable workflow, pinned to a reviewed commit. It
 downloads the latest stable release's DMG, verifies it against `SHA256SUMS.txt`, updates the cask and
-checks the remote result. The overall release workflow is green only after this job succeeds.
+checks the remote result. The caller passes this run's release version: a stale GitHub latest-release
+response cannot satisfy a newer release and is retried before failing. The overall release workflow
+is green only after this job succeeds.
 If the job fails, the app release remains available, but the workflow is red: use **Re-run failed jobs**
 to retry just the cask job without rebuilding the app. The tap's **Refresh fork cask → Run workflow**
 also repairs the latest release independently. Its daily 21:31 UTC schedule is a fallback, not the

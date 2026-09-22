@@ -46,6 +46,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
     env:
       GH_REPO: ${{ github.repository }}
     steps:
@@ -87,9 +89,11 @@ jobs:
           fi
           if [[ "$RELEASED" == "$(git rev-parse HEAD)" && "$TAG" == "v$UPSTREAM_VERSION-fork."* ]]; then
             echo 'needed=false' >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
             echo 'Up to date; no build or release needed.' >> "$GITHUB_STEP_SUMMARY"
           else
             echo 'needed=true' >> "$GITHUB_OUTPUT"
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Select Xcode 26 and install lint tools
@@ -204,6 +208,8 @@ jobs:
     needs: update
     permissions:
       contents: write
-    uses: lemonteaau/homebrew-tinycast/.github/workflows/update-cask.yml@ca8e7a90a6925f017d174f910b24f46c20502a97
+    uses: lemonteaau/homebrew-tinycast/.github/workflows/update-cask.yml@67dd997052bd5578bf868dfbacfd412b5a0fb217
+    with:
+      minimum-version: ${{ needs.update.outputs.version }}
     secrets:
       TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
