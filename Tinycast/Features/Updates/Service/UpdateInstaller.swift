@@ -91,9 +91,15 @@ struct UpdateInstaller: Sendable {
             throw UpdateFailure.bundleMismatch
         }
         let found = info?["CFBundleShortVersionString"] as? String
-        guard found == release.version.description else {
+        guard found == release.version.upstreamVersion else {
             throw UpdateFailure.versionMismatch(
-                expected: release.version.description, found: found ?? "unknown")
+                expected: release.version.upstreamVersion, found: found ?? "unknown")
+        }
+        let revision = (info?["CFBundleVersion"] as? String).flatMap(Int.init)
+        guard revision == release.version.fork else {
+            throw UpdateFailure.versionMismatch(
+                expected: release.version.description,
+                found: "\(found ?? "unknown")-fork.\(revision ?? -1)")
         }
         guard BundleSignature.isTrusted(staged) else { throw UpdateFailure.identityMismatch }
     }

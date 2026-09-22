@@ -1,5 +1,5 @@
 name: Fork sync, test and release
-run-name: "Fork build 1.0.${{ github.run_number }}"
+run-name: "Tinycast fork #${{ github.run_number }}"
 
 on:
   schedule:
@@ -23,7 +23,6 @@ jobs:
     permissions:
       contents: write
     env:
-      VERSION: 1.0.${{ github.run_number }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -37,6 +36,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           bash Scripts/fork-sync.sh
+
+      - name: Match the upstream stable version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh api repos/abue-ammar/tinycast/releases/latest --jq .tag_name)
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Unexpected upstream stable tag: $TAG" >&2
+            exit 1
+          fi
+          UPSTREAM_VERSION=${TAG#v}
+          echo "UPSTREAM_VERSION=$UPSTREAM_VERSION" >> "$GITHUB_ENV"
+          echo "VERSION=$UPSTREAM_VERSION-fork.$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
 
       - name: Check whether this commit is already released
         id: release
@@ -108,7 +120,7 @@ jobs:
             -derivedDataPath "$RUNNER_TEMP/Release" ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
             CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Tinycast Fork lemonteaau' \
             OTHER_CODE_SIGN_FLAGS='--timestamp=none' \
-            MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build
+            MARKETING_VERSION="$UPSTREAM_VERSION" CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build
           APP="$RUNNER_TEMP/Release/Build/Products/Release/Tinycast.app"
           ./Scripts/verify-signature.sh "$APP"
           for BIN in "$APP/Contents/MacOS/Tinycast" "$APP/Contents/Helpers/ClipboardTextHelper"; do
@@ -134,7 +146,7 @@ jobs:
           git push origin HEAD:main
           TAG="v$VERSION"
           {
-            echo "Personal Tinycast fork build $VERSION."
+            echo "Personal Tinycast fork build $VERSION, based on upstream $UPSTREAM_VERSION."
             echo
             echo 'Supports currency shorthand such as 610 aud cny.'
             echo "Upstream: https://github.com/abue-ammar/tinycast/commit/$UPSTREAM"

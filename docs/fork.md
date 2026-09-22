@@ -32,8 +32,11 @@ idempotence and conflict rollback in temporary Git repositories.
 
 ## Builds and updates
 
-Fork versions use **1.0.N**, where N is the Actions workflow run number. These versions are independent
-of upstream versions; each release identifies the upstream commit and exact fork source commit.
+The app's macOS version matches the latest official stable release exactly (currently `0.11.3`).
+Fork release tags and download filenames append `-fork.N`, where N is the Actions run number:
+`v0.11.3-fork.2` means official version `0.11.3`, fork build 2. The bundle build number matches N,
+allowing the in-app updater to distinguish successive fork builds even when upstream does not bump
+its version. Each release identifies the upstream commit and exact fork source commit.
 Releases contain an Apple silicon (arm64) DMG, updater-compatible ZIP and SHA-256 checksums.
 macOS 26 or newer is required. Intel builds are not published by this personal workflow.
 
@@ -42,10 +45,11 @@ settings, clipboard data and shortcuts. Its update feed points to **lemonteaau/t
 stable release channel selected; this fork does not publish beta releases. Do not reinstall Tinycast
 from the upstream Homebrew cask, which would replace this fork with the official build.
 
-Install the first fork release manually by quitting Tinycast and replacing `/Applications/Tinycast.app`
-with the app from the downloaded DMG or ZIP. Back up the previous application first. The official
-app's updater will not install a fork signed by a different identity. After replacement, Accessibility
-may need to be granted again in System Settings. Later fork updates use the normal in-app updater.
+Install the first fork release from the [personal Homebrew tap](https://github.com/lemonteaau/homebrew-tinycast)
+or manually by quitting Tinycast and replacing `/Applications/Tinycast.app` with the app from the DMG.
+Back up the previous application first. The official app's updater will not install a fork signed by
+a different identity. After replacement, Accessibility may need to be granted again in System Settings.
+Later fork updates use the normal in-app updater; the tap cask is also refreshed by its own daily Action.
 
 Builds use one dedicated self-signed identity, **Tinycast Fork lemonteaau**, retained in repository
 Actions secrets `SIGNING_P12_BASE64` and `SIGNING_P12_PASSWORD`. They do not use the upstream author's

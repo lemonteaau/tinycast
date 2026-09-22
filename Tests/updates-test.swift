@@ -45,6 +45,11 @@ struct UpdatesTests {
         expect(AppVersion("0.2.0-beta.42")?.description == "0.2.0-beta.42", "round-trips a beta")
         expect(AppVersion("0.2.1")?.isPrerelease == false, "a plain triple is not a prerelease")
         expect(AppVersion("0.2.0-beta.1")?.isPrerelease == true, "a beta is a prerelease")
+        expect(AppVersion("v0.11.3-fork.12")?.description == "0.11.3-fork.12", "fork tag keeps upstream version")
+        expect(AppVersion("0.11.3", forkRevision: 12) == AppVersion("v0.11.3-fork.12"),
+               "the bundle version identifies the matching fork release")
+        expect(AppVersion("0.11.3-fork.12")?.isPrerelease == false, "fork builds stay on stable")
+        expect(AppVersion("0.11.3-fork.12")?.upstreamVersion == "0.11.3", "bundle uses official version")
 
         expect(AppVersion("0.2") == nil, "rejects a two-part version")
         expect(AppVersion("0.2.1.3") == nil, "rejects a four-part version")
@@ -53,6 +58,9 @@ struct UpdatesTests {
         expect(AppVersion("0.2.0-alpha.1") == nil, "rejects a channel that never ships")
         expect(AppVersion("0.2.0-beta") == nil, "rejects a beta with no counter")
         expect(AppVersion("0.2.0-beta.x") == nil, "rejects a non-numeric beta counter")
+        expect(AppVersion("0.11.3-fork.x") == nil, "rejects an invalid fork revision")
+        expect(AppVersion("0.11.3-fork.1", forkRevision: 2) == nil,
+               "rejects conflicting fork revisions")
         expect(AppVersion("") == nil, "rejects an empty string")
         expect(AppVersion("nightly") == nil, "rejects a name")
     }
@@ -74,6 +82,9 @@ struct UpdatesTests {
             "beta counters compare numerically, not lexically")
         expect(version("0.3.0-beta.1") > version("0.2.9"), "a newer triple wins despite being beta")
         expect(version("0.2.1") == version("0.2.1"), "equal triples are equal")
+        expect(version("0.11.3-fork.12") > version("0.11.3-fork.2"), "fork revisions order numerically")
+        expect(version("0.11.3-fork.1") > version("0.11.3"), "a fork revision follows its upstream base")
+        expect(version("0.11.4") > version("0.11.3-fork.999"), "a newer upstream release wins")
         expect(
             version("0.2.0-beta.1") != version("0.2.0"),
             "a prerelease is never equal to its release")
@@ -161,6 +172,10 @@ struct UpdatesTests {
             stable?.assetURL.absoluteString.hasSuffix(".zip") == true,
             "and selects the zip asset")
         expect(stable?.publishedAt != nil, "and parses the ISO-8601 timestamp")
+        let fork = ReleaseFeed.newest(
+            from: feed(entry(tag: "v0.11.3-fork.3", prerelease: false)),
+            channel: .stable, architecture: .appleSilicon)
+        expect(fork?.version == AppVersion("0.11.3-fork.3"), "fork release stays on the stable feed")
 
         let beta = ReleaseFeed.newest(from: body, channel: .beta, architecture: .appleSilicon)
         expect(beta?.version == AppVersion("0.4.0-beta.2"), "beta takes the newest prerelease")

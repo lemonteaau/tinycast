@@ -1,14 +1,16 @@
 import Foundation
 
-/// A released version: `MAJOR.MINOR.PATCH`, optionally `-beta.N`, ordered by semver precedence.
+/// An upstream version, optionally with a beta or a personal-fork build number.
 struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
     let major: Int
     let minor: Int
     let patch: Int
     /// Nil on a stable release, which outranks every prerelease of the same triple.
     let beta: Int?
+    /// A fork build keeps the upstream version visible while ordering its own updates.
+    let fork: Int?
 
-    init?(_ text: String) {
+    init?(_ text: String, forkRevision: Int? = nil) {
         var body = Substring(text.trimmingCharacters(in: .whitespacesAndNewlines))
         // Release tags carry a leading `v`; `CFBundleShortVersionString` never does.
         if body.first == "v" { body = body.dropFirst() }
@@ -22,13 +24,23 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
         else { return nil }
 
         if halves.count == 2 {
-            // `beta` is the only prerelease channel that ships, so anything else is unreadable.
             let suffix = halves[1].split(separator: ".", omittingEmptySubsequences: false)
-            guard suffix.count == 2, suffix[0] == "beta", let count = Self.number(suffix[1])
+            guard suffix.count == 2, let count = Self.number(suffix[1]), forkRevision == nil
             else { return nil }
-            beta = count
+            switch suffix[0] {
+            case "beta":
+                beta = count
+                fork = nil
+            case "fork":
+                beta = nil
+                fork = count
+            default:
+                return nil
+            }
         } else {
             beta = nil
+            if let forkRevision, forkRevision < 0 { return nil }
+            fork = forkRevision
         }
         self.major = major
         self.minor = minor
@@ -39,21 +51,24 @@ struct AppVersion: Comparable, Hashable, Sendable, CustomStringConvertible {
 
     var description: String {
         let triple = "\(major).\(minor).\(patch)"
-        return beta.map { "\(triple)-beta.\($0)" } ?? triple
+        if let beta { return "\(triple)-beta.\(beta)" }
+        if let fork { return "\(triple)-fork.\(fork)" }
+        return triple
     }
 
     static func < (lhs: Self, rhs: Self) -> Bool {
         if lhs.major != rhs.major { return lhs.major < rhs.major }
         if lhs.minor != rhs.minor { return lhs.minor < rhs.minor }
         if lhs.patch != rhs.patch { return lhs.patch < rhs.patch }
-        switch (lhs.beta, rhs.beta) {
-        case (nil, nil): return false
-        // A prerelease leads to its release, so it sorts below one and never above it.
-        case (.some, nil): return true
-        case (nil, .some): return false
-        case (.some(let left), .some(let right)): return left < right
+        if lhs.beta != nil || rhs.beta != nil {
+            if let left = lhs.beta, let right = rhs.beta { return left < right }
+            return lhs.beta != nil
         }
+        if let left = lhs.fork, let right = rhs.fork { return left < right }
+        return lhs.fork == nil && rhs.fork != nil
     }
+
+    var upstreamVersion: String { "\(major).\(minor).\(patch)" }
 
     /// Rejects a signed or padded field, which `Int` would silently reinterpret.
     private static func number(_ text: Substring) -> Int? {

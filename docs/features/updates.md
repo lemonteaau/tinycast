@@ -3,6 +3,8 @@
 This fork reads releases from `lemonteaau/tinycast` and publishes arm64 stable builds with its
 own fixed signing identity. See [fork.md](../fork.md) for its first-install and release process.
 The upstream release automation and Homebrew casks described below do not publish this fork.
+Its release tags add `-fork.N` to the official version while the bundle's display version remains
+the official triple; the bundle build number N determines when a fork release is newer.
 
 Tinycast checks GitHub Releases once a day, offers the newest release for its own channel in a native
 window with its release notes, installs it and relaunches. There is no Sparkle and no appcast: the
@@ -76,7 +78,9 @@ release feed the website already reads is the feed the app reads.
 | `com.tinycast.app.beta` | `.beta` | prereleases |
 | anything else | `.development` | nothing |
 
-`AppVersion` parses `MAJOR.MINOR.PATCH` and `MAJOR.MINOR.PATCH-beta.N` with semver precedence: a
+`AppVersion` parses `MAJOR.MINOR.PATCH`, `MAJOR.MINOR.PATCH-beta.N`, and this fork's stable
+`MAJOR.MINOR.PATCH-fork.N`. A fork build follows its official triple and precedes a newer triple.
+A beta retains semver precedence: a
 prerelease sorts below the release it leads to, and `beta.10` above `beta.9`. Everything else parses
 to nil, so an off-shape tag can never be offered as an update. A release whose tag disagrees with
 its `prerelease` flag is treated as mis-published and skipped.
