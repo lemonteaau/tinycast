@@ -2,14 +2,15 @@ import SwiftUI
 
 /// `Theme`'s palette geometry at the user's Interface Size; `.standard` is `Theme` verbatim.
 struct InterfaceMetrics: Equatable, Sendable {
-    static let standard = InterfaceMetrics(scale: 1)
+    static let standard = InterfaceMetrics(scale: 1, contentScale: 1)
 
     let scale: CGFloat
+    let contentScale: CGFloat
 
     var spacing: Spacing { Spacing(scale: scale) }
     var radius: Radius { Radius(scale: scale) }
-    var size: Size { Size(scale: scale) }
-    var typography: Typography { Typography(scale: scale) }
+    var size: Size { Size(scale: scale, contentScale: contentScale) }
+    var typography: Typography { Typography(scale: contentScale) }
 
     /// For a tuned length a surface owns itself, where `Theme` states no token for it.
     func scaled(_ value: CGFloat) -> CGFloat { scaledPoints(value, scale) }
@@ -55,6 +56,7 @@ struct InterfaceMetrics: Equatable, Sendable {
 
     struct Size: Equatable, Sendable {
         let scale: CGFloat
+        let contentScale: CGFloat
 
         var panelWidth: CGFloat { scaledPoints(Theme.Size.panelWidth, scale) }
         var panelHeight: CGFloat { scaledPoints(Theme.Size.panelHeight, scale) }
@@ -65,7 +67,7 @@ struct InterfaceMetrics: Equatable, Sendable {
         var compactHeight: CGFloat { headerHeight + headerPadding * 2 }
         var bottomBarHeight: CGFloat { scaledPoints(Theme.Size.bottomBarHeight, scale) }
         var barButtonHeight: CGFloat { scaledPoints(Theme.Size.barButtonHeight, scale) }
-        var rowIcon: CGFloat { scaledPoints(Theme.Size.rowIcon, scale) }
+        var rowIcon: CGFloat { scaledPoints(Theme.Size.rowIcon, contentScale) }
         var colorDot: CGFloat { scaledPoints(Theme.Size.colorDot, scale) }
         var calendarBarWidth: CGFloat { scaledPoints(Theme.Size.calendarBarWidth, scale) }
         var calendarBarHeight: CGFloat { scaledPoints(Theme.Size.calendarBarHeight, scale) }

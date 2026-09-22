@@ -66,9 +66,11 @@ Add a token rather than a magic number when introducing a new value.
 extension list panel, Quick Actions, dialogs and HUDs. Settings, Onboarding,
 Support, Update, About and Notes never scale.
 
-`DesignSystem/InterfaceMetrics.swift` stores **only a scale** and derives every value from the `Theme`
-literal, so `Theme` stays the one place a number is written down. **In any view a scaled surface can
-reach, read `@Environment(\.metrics)` rather than `Theme.Spacing/Radius/Size/Typography`** — the key
+`DesignSystem/InterfaceMetrics.swift` stores separate frame and content scales and derives every value
+from the `Theme` literal, so `Theme` stays the one place a base size is written down. The content scale
+drives typography and launcher row icons; the frame scale keeps the panel dimensions and spacing.
+**In any view a scaled surface can reach, read `@Environment(\.metrics)` rather than
+`Theme.Spacing/Radius/Size/Typography`** — the key
 defaults to `.standard`, so a shared `DesignSystem/` component renders unscaled in Settings without
 being forked. An AppKit site reads `settings.interfaceSize.metrics` where it computes its frame.
 

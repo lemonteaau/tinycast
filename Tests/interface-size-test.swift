@@ -26,6 +26,7 @@ struct InterfaceSizeTests {
         fontsKeepTheirFace()
         everySizeRounds()
         sizesGrow()
+        readableContentKeepsTheFrame()
         derivationsHold()
         theEnumIsWellFormed()
 
@@ -181,7 +182,7 @@ struct InterfaceSizeTests {
                 let base = NSFont.preferredFont(forTextStyle: style)
                 let scaled = NSFont(
                     descriptor: base.fontDescriptor,
-                    size: (base.pointSize * size.scale).rounded())
+                    size: (base.pointSize * size.contentScale).rounded())
                 expect(scaled != nil, "\(style.rawValue) rebuilds from its own descriptor")
                 expect(
                     scaled?.familyName == base.familyName,
@@ -192,7 +193,7 @@ struct InterfaceSizeTests {
             }
             expect(
                 metrics.typography.searchFieldSize
-                    == (Theme.Typography.searchFieldSize * size.scale).rounded(),
+                    == (Theme.Typography.searchFieldSize * size.contentScale).rounded(),
                 "the search field's stated size scales at \(size.rawValue)")
         }
     }
@@ -226,6 +227,19 @@ struct InterfaceSizeTests {
                 "the panel is wider at \(larger.rawValue)")
             expect(smaller.scale < larger.scale, "\(larger.rawValue) scales further")
         }
+    }
+
+    static func readableContentKeepsTheFrame() {
+        let large = InterfaceSize.large.metrics
+        let larger = InterfaceSize.larger.metrics
+        expect(large.size.panelWidth, 825, "Large keeps its existing panel width")
+        expect(large.size.panelHeight, 523, "Large keeps its existing panel height")
+        expect(large.typography.searchFieldSize, 24, "Large search text is easier to read")
+        expect(large.size.rowIcon, 29, "Large launcher icons are easier to see")
+        expect(larger.typography.searchFieldSize > large.typography.searchFieldSize,
+               "Larger text still grows beyond Large")
+        expect(larger.size.rowIcon > large.size.rowIcon,
+               "Larger icons still grow beyond Large")
     }
 
     /// A derived token composes scaled parts; scaling the result would disagree by a point.
