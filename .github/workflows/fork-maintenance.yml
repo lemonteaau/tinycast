@@ -16,7 +16,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  homebrew-access:
+    if: github.repository == 'lemonteaau/tinycast'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the dedicated tap deploy key
+        env:
+          TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+        run: |
+          test -n "$TAP_DEPLOY_KEY" || {
+            echo 'HOMEBREW_TAP_DEPLOY_KEY is required before publishing a release.' >&2
+            exit 1
+          }
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: lemonteaau/homebrew-tinycast
+          ref: main
+          ssh-key: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+
+      - name: Check tap write access before building
+        run: git push --dry-run origin HEAD:main
+
   update:
+    needs: homebrew-access
     if: github.repository == 'lemonteaau/tinycast'
     runs-on: macos-26
     timeout-minutes: 60
@@ -61,7 +85,7 @@ jobs:
           if [ -n "$TAG" ]; then
             RELEASED=$(git rev-parse "$TAG^{commit}" 2>/dev/null || true)
           fi
-          if [ "$RELEASED" = "$(git rev-parse HEAD)" ]; then
+          if [[ "$RELEASED" == "$(git rev-parse HEAD)" && "$TAG" == "v$UPSTREAM_VERSION-fork."* ]]; then
             echo 'needed=false' >> "$GITHUB_OUTPUT"
             echo 'Up to date; no build or release needed.' >> "$GITHUB_STEP_SUMMARY"
           else
@@ -174,3 +198,12 @@ jobs:
           if [ -f "$RUNNER_TEMP/fork-signing.keychain-db" ]; then
             security delete-keychain "$RUNNER_TEMP/fork-signing.keychain-db"
           fi
+
+  homebrew:
+    name: Publish and verify Homebrew cask
+    needs: update
+    permissions:
+      contents: write
+    uses: lemonteaau/homebrew-tinycast/.github/workflows/update-cask.yml@ca8e7a90a6925f017d174f910b24f46c20502a97
+    secrets:
+      TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}

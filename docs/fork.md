@@ -18,13 +18,18 @@ The fork owns the entire `.github/workflows` directory: upstream workflow change
 excluded from the merge result. This prevents upstream publishing, website and announcement jobs
 from being restored, and keeps routine sync within `GITHUB_TOKEN`'s contents permission.
 Review upstream build/release workflow changes manually when tooling or packaging requirements change.
-There is no stored personal GitHub access token and no force push.
+There is no stored personal GitHub access token and no force push. A dedicated SSH deploy key grants
+the final Homebrew job write access to `lemonteaau/homebrew-tinycast` only; it grants no access to other
+repositories. It is stored as `HOMEBREW_TAP_DEPLOY_KEY` in this repository's Actions secrets. Tap access
+is checked before building. The build/signing job never receives the tap key.
 
 A conflict outside that directory aborts the merge. Tests, lint, a Debug build and a signed Release
 build must all pass before a merge is pushed to `main`. The final push also verifies that `main` has
 not moved during the build. An unsuccessful run leaves the last published release available.
 If publishing fails after the push, rerun the failed workflow; an unpublished commit is built again.
-Draft releases are uploaded completely before being published. A commit already released is skipped.
+Draft releases are uploaded completely before being published. An already released commit skips the
+build only when its official base version still matches upstream; Homebrew synchronization still runs
+to repair an interrupted publication.
 
 The sync and release happen in the same workflow: a push using `GITHUB_TOKEN` does not need to trigger
 another workflow. `Tests/fork-sync-test.sh` exercises successful merges, workflow isolation,
@@ -49,7 +54,38 @@ Install the first fork release from the [personal Homebrew tap](https://github.c
 or manually by quitting Tinycast and replacing `/Applications/Tinycast.app` with the app from the DMG.
 Back up the previous application first. The official app's updater will not install a fork signed by
 a different identity. After replacement, Accessibility may need to be granted again in System Settings.
-Later fork updates use the normal in-app updater; the tap cask is also refreshed by its own daily Action.
+Later fork updates use the normal in-app updater or the named Homebrew upgrade command below.
+
+## Homebrew publication
+
+Release publication immediately calls the tap's reusable workflow, pinned to a reviewed commit. It
+downloads the latest stable release's DMG, verifies it against `SHA256SUMS.txt`, updates the cask and
+checks the remote result. The overall release workflow is green only after this job succeeds.
+If the job fails, the app release remains available, but the workflow is red: use **Re-run failed jobs**
+to retry just the cask job without rebuilding the app. The tap's **Refresh fork cask → Run workflow**
+also repairs the latest release independently. Its daily 21:31 UTC schedule is a fallback, not the
+normal delivery path. Repeated runs create no duplicate commits, concurrent push failures retry from
+the latest remote state, and version/checksum guards prevent rollback or silent asset replacement.
+
+The tap stays separate so existing installations keep the same name and remote. Merging it into the
+source repository would require a tap migration and mix generated catalog commits into upstream
+merges. The dedicated deploy key avoids a personal access token or a second account. It does not
+expire automatically; if it is revoked (including through deauthorization of the GitHub CLI credential
+that created it), the preflight check fails before a new release is built. Replace the tap's public
+deploy key and this repository's matching secret together. Never store its private key in Git.
+
+Once the release workflow succeeds, refresh your Mac's local catalog and upgrade explicitly:
+
+```sh
+brew update
+brew upgrade --cask tinycast-fork
+```
+
+`auto_updates true` remains set because the app has its own updater. A plain `brew upgrade` can skip
+such casks; explicitly naming `tinycast-fork` is supported. Updating the remote tap cannot force an
+already installed Homebrew client to refresh its local catalog or install a new app.
+
+## Signing
 
 Builds use one dedicated self-signed identity, **Tinycast Fork lemonteaau**, retained in repository
 Actions secrets `SIGNING_P12_BASE64` and `SIGNING_P12_PASSWORD`. They do not use the upstream author's
