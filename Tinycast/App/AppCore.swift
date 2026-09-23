@@ -284,6 +284,13 @@ final class AppCore {
             paletteCoordinator.onLauncherShown = { [weak self] in
                 self?.appleShortcutCoordinator.refresh()
             }
+            paletteCoordinator.onScreenOpening = { [weak self] mode in
+                switch mode {
+                case .menuSearch: self?.menuSearchCoordinator.load()
+                case .switchWindows: self?.windowSwitchCoordinator.load()
+                default: break
+                }
+            }
             updateCoordinator.applyEnabled()
             calendarCoordinator.applyEnabled()
             Task { await appIndex.refresh() }
@@ -331,6 +338,10 @@ final class AppCore {
             }
             extensions.onDidUninstall = { [weak self] entryIDs in
                 self?.extensionCoordinator.removeExtensionReferences(entryIDs: entryIDs)
+            }
+            appIndex.onScan = { [weak self] in
+                guard let self else { return }
+                hotKeys.removeAppBindings(where: appIndex.isUninstalled)
             }
             hotKeys.displayName = { [weak self] action in self?.hotKeyDisplayName(for: action) }
             hotKeys.allowsAction = { [weak self] action in
@@ -582,6 +593,8 @@ final class AppCore {
                 _ = $0.autoJoinMeetings
                 _ = $0.menuBarEvents
                 _ = $0.calendarMenuBarDisplay
+                _ = $0.menuBarLinkedEventsOnly
+                _ = $0.hideCurrentEvent
             }, reproject: { $0.calendarCoordinator.applyClock() })
         track(
             {

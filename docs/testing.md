@@ -82,8 +82,7 @@ If a change touches anything in the right column, the harness on the left is man
 
 | Harness | Guards |
 | --- | --- |
-| `fuzz-test` | `Launcher/Model/SearchRelevance.swift`, `EntryNaming.swift`, `ScriptRomanization.swift`, `LauncherOrder.swift` |
-| `corpus-test` | the launcher's ranking, over a dense synthetic index — **a new complaint is a new case in `Tests/launcher-corpus/corpus.json`** |
+| `fuzz-test` | `Launcher/Model/LauncherMatch.swift`, `LauncherOrder.swift`, `LauncherSuggestions.swift`, `EntryNaming.swift`, `ScriptRomanization.swift`, `SearchRelevance.swift`, `LauncherRankingStore.swift` — **a new ranking complaint is a new case in its `denseIndex`** |
 | `file-search-test` | `FileSearch/Model/`, plus the shared `FuzzyMatch` scorer |
 | `file-search-session-test` | serialized query execution, debounce coalescing and cancellation |
 | `menu-search-test` | `MenuSearch/Model/` decisions, `MenuSearch/Service/` session filtering, the shared `FuzzyMatch` scorer |
@@ -301,7 +300,6 @@ Measured at the end of the 2026 refactor, on `main`. Useful as orders of magnitu
 | --- | --- |
 | Release binary | 3,655,736 B (from 3,471,592 B at the start of the refactor) |
 | Resident memory | 40–80 MB in normal use; the hard ceiling is 100 MB |
-| `SpotlightNames` cache | 76 ms cold, 0.2 ms warm |
 | `SettingsPaneScanner` warm scan | 0.014 ms (16.5 ms cold), 52 panes |
 | Largest view / owner | `RootPaletteView` 662 lines, `AppCore` 284 lines |
 | Comment density | 1,653 of 27,289 source lines (6.1%) |
@@ -384,6 +382,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Off (Settings ▸ Clipboard ▸ Enable Clipboard History): nothing new is recorded, the launcher row
   and its shortcut are gone, the menu-bar row is gone, and Tab rings straight past the screen
 - Off then on again: existing clips come back; Clear history erases them while it is still off
+- A text, link, image and file row each drag into another app; a click still selects, a double
+  click still pastes, and a right click still opens ⌘K
 
 ### Launcher and icons
 
@@ -392,6 +392,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   even with the scrollbar thumb dragged from end to end in under a second
 - An app removed since the last open drops out after a reopen
 - Learned ranking still surfaces your habitual result for a short query
+- An application row drags onto the Dock and into a Finder window as a copy, never a move, and a
+  landed drop hides the palette; a click still launches; no other kind of row drags
 
 ### Hotkeys
 
@@ -440,6 +442,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Library internals, generated trees, application bundles and hidden paths do not appear
 - Visible custom top-level home folders and cloud-drive files remain searchable
 - Return opens, Command-Return reveals in Finder, and Copy Path keeps the palette open with a HUD
+- A file and a folder drag into Finder as copies and into a browser's upload field; a cancelled drag
+  flies back and leaves the palette up, a landed one hides it
 - Replacing a query quickly never lets an older result list overwrite the current query
 - A broad `.` search can be scrolled end to end; leaving it releases its fitted icons, and repeating the
   cycle does not raise the post-close memory floor
@@ -578,6 +582,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - On Meeting Title with Show Upcoming Events at 5 minutes, the title and countdown appear at T-5 and
   step on the minute boundary, not on a keystroke
 - `Only show events with meetings` hides a linkless event and shows it again when unchecked
+- `Hide when there are no upcoming events` removes the item whenever it would show only the glyph or
+  `No upcoming events`: on Today after the last event, on 5 minutes between meetings too. It returns
+  with the next event and never moves the `Calendar in Menu Bar` picker off its choice
 - Hide Current Event on Automatically clears the entry at the start and hands the space to the next
   event inside its lead time; on 5 minutes it lingers counting up, then clears
 - Clicking the calendar item opens `Join <title>`, `Open in Calendar...`, `My Schedule` and

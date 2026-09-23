@@ -79,7 +79,6 @@ struct GeneralSettingsView: View {
                     SettingsRowTitle(.generalAppearance, "Theme")
                 }
                 InterfaceSizeRow()
-                PaletteTransparencyRow()
                 WindowModeRow()
                 Toggle(isOn: $settings.showFavoritesInCompactMode) {
                     SettingsRowTitle(.generalAppearance, "Show favorites in compact mode")
@@ -161,6 +160,18 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                Toggle(isOn: $settings.launcherShowsSuggestions) {
+                    SettingsRowTitle(.generalSearch, "Show suggestions")
+                    Text("What you open most, while the search field is empty.")
+                }
+                Picker(selection: $settings.rootSearchSensitivity) {
+                    ForEach(SearchSensitivity.allCases) { sensitivity in
+                        Text(sensitivity.title).tag(sensitivity)
+                    }
+                } label: {
+                    SettingsRowTitle(.generalSearch, "Search sensitivity")
+                    Text("Lower finds names from scattered letters.")
+                }
                 LabeledContent {
                     Button("Reset…", role: .destructive) {
                         confirmingRankingReset = true
@@ -311,50 +322,5 @@ private struct InterfaceSizeRow: View {
         .accessibilityLabel(size.title)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .help(size.title)
-    }
-}
-
-private struct PaletteTransparencyRow: View {
-    @Environment(AppSettings.self) private var settings
-    @State private var draft: Double?
-    @State private var isEditing = false
-
-    private var value: Binding<Double> {
-        Binding(
-            get: { draft ?? Double(settings.paletteTransparency) },
-            set: { value in
-                if isEditing {
-                    draft = value
-                } else {
-                    settings.paletteTransparency = Int(value)
-                }
-            })
-    }
-
-    var body: some View {
-        SettingsRow(title: "Background transparency", anchor: .generalAppearance) {
-            Slider(
-                value: value, in: -100...100, step: 50, neutralValue: 0,
-                label: { EmptyView() },
-                minimumValueLabel: { Text("Less") },
-                maximumValueLabel: { Text("More") },
-                tick: { SliderTick($0) },
-                onEditingChanged: { editing in
-                    isEditing = editing
-                    if !editing, let draft {
-                        settings.paletteTransparency = Int(draft)
-                        self.draft = nil
-                    }
-                }
-            )
-            .labelsHidden()
-            .accessibilityLabel("Background transparency")
-            .frame(width: Theme.Size.paletteTransparencySlider)
-            Button("Reset") {
-                draft = nil
-                settings.paletteTransparency = 0
-            }
-            .help("Restore the default background in Light and Dark.")
-        }
     }
 }
