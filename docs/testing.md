@@ -105,6 +105,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `GlobeTapDetector.swift`, `HotKeyBinding.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
 | `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
+| `dictionary-history-test` | Local lookup-history persistence, case-insensitive deduplication, search, cap, removal and clearing |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
 | `volume-test` | `SystemActions/Model/VolumeLevel.swift` |
@@ -384,6 +385,13 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Off then on again: existing clips come back; Clear history erases them while it is still off
 - A text, link, image and file row each drag into another app; a click still selects, a double
   click still pastes, and a right click still opens ⌘K
+
+### Dictionary
+
+- A completed lookup appears in Dictionary History, including a term with no definition
+- Repeating a term with different letter case moves its single row to the top
+- Search filters history; Enter reopens Tinycast's definition and ⌘↵ opens Dictionary.app
+- ⌃X deletes one row; ⌃⇧X asks before clearing every lookup
 
 ### Launcher and icons
 

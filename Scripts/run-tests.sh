@@ -268,6 +268,9 @@ run fallback-test          Tinycast/Features/Launcher/Model/Fallback.swift \
                            Tinycast/Features/WindowManagement/Model/WindowCommand.swift
 run dictionary-test        Tinycast/Features/Dictionary/Model/DictionaryEntry.swift \
                            Tinycast/Features/Dictionary/Model/DictionaryMarkup.swift
+run dictionary-history-test Tinycast/Features/Dictionary/Model/DictionaryHistoryEntry.swift \
+                            Tinycast/Features/Dictionary/Service/DictionaryHistoryStore.swift \
+                            Tinycast/Platform/AppPaths.swift
 run hotkey-test            Tinycast/Features/HotKeys/Model/DoubleTapModifier.swift \
                            Tinycast/Features/HotKeys/Model/DoubleTapDetector.swift \
                            Tinycast/Features/HotKeys/Model/GlobeTapDetector.swift \

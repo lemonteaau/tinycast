@@ -15,6 +15,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
     case quicklinks
     case snippets
     case dictionary
+    case dictionaryHistory
     /// A Raycast extension command rendering into the palette.
     case extensionCommand
 
@@ -36,6 +37,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .quicklinks: return Quicklink.sfSymbol
         case .snippets: return "curlybraces"
         case .dictionary: return "book.closed"
+        case .dictionaryHistory: return "clock.arrow.circlepath"
         case .extensionCommand: return "puzzlepiece.extension"
         }
     }
@@ -55,6 +57,7 @@ enum PaletteMode: String, CaseIterable, Identifiable {
         case .quicklinks: return "Search quicklinks…"
         case .snippets: return "Search snippets…"
         case .dictionary: return "Look up a word…"
+        case .dictionaryHistory: return "Search lookup history…"
         // Replaced by the command's own `searchBarPlaceholder` whenever it declares one.
         case .extensionCommand: return "Search…"
         }

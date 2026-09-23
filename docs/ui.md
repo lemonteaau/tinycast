@@ -364,8 +364,9 @@ All lists share one row grammar so launcher and clipboard look identical:
 
 ### Section headers
 
-All six palette lists (App Launcher, Clipboard, Emoji, File Search, Calculator History, Uninstall) render category labels
-through one shared **`SectionHeader`** (`.subheadline.medium`, secondary — `Features/Launcher/UI/SectionHeader.swift`).
+All seven palette lists (App Launcher, Clipboard, Emoji, File Search, Calculator History, Dictionary
+History, Uninstall) render category labels through one shared **`SectionHeader`** (`.subheadline.medium`,
+secondary — `Features/Launcher/UI/SectionHeader.swift`).
 The launcher shows a single "Results" header over search matches, and per-kind sections
 (Favorites / Applications / System Settings / Commands) for the empty query; clipboard/history use
 date buckets (Today / Yesterday / …), and the clipboard adds a "Pinned" section above them holding
@@ -539,7 +540,8 @@ Custom thin overlay scrollbar (the native one flashes and reserves a gutter insi
 style; `.thinScrollbar()` on the scroll view draws a hairline thumb (`Color.primary` alpha 0.30 rest →
 0.42 hover → 0.5 drag) that fattens on hover, with a faint rail revealed only while hovering/dragging.
 
-Routing: the palette lists (App Launcher, Clipboard history, Emoji, File Search, Calculator history) use
+Routing: the palette lists (App Launcher, Clipboard history, Emoji, File Search, Calculator history,
+Dictionary history) use
 `.thinScrollbar()` + `.hideNativeScrollers()`; the Clipboard preview (right pane), every Settings
 pane and the update window take the native scroller as-is. Don't reintroduce native scrollers on the palette lists.
 

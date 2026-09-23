@@ -86,10 +86,12 @@ the shared primitives and system shims every feature draws on. Neither may depen
 `AppCore.shared` (`App/AppCore.swift`) is a `@MainActor` singleton owning every long-lived thing in the
 app: the stores (`AppIndex`, `ClipboardStore`, `SnippetsStore`, `QuicklinkStore`, `CustomCommandStore`,
 `FavoritesStore`, `VisibilityStore`, `AliasStore`, `LauncherRankingStore`, `CalculatorHistoryStore`,
-`CurrencyRateStore`, `FrequentEmojiStore`, `CalendarStore`), the managers, monitors and clocks
+`DictionaryHistoryStore`, `CurrencyRateStore`, `FrequentEmojiStore`, `CalendarStore`), the managers,
+monitors and clocks
 (`ClipboardManager`, the opt-in `ClipboardTextIndexer`,
 `HotKeyManager`, `HyperKeyTap`, `RunningAppsMonitor`, `SnippetKeywordListener`), the shared state
-(`AppSettings`, `PaletteState`, `FileSearchSession`, `MenuSearchSession`, `UninstallSession`,
+(`AppSettings`, `PaletteState`, `FileSearchSession`, `DictionarySession`, `MenuSearchSession`,
+`UninstallSession`,
 `MeetingClock`), `NotesStore`, the twenty feature coordinators, and the
 window controllers.
 

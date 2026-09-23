@@ -8,6 +8,7 @@ enum CommandID: String, CaseIterable, Sendable {
     case translate = "command:translate"
     case summarize = "command:summarize"
     case calculatorHistory = "command:calculator-history"
+    case dictionaryHistory = "command:dictionary-history"
     case clipboardHistory = "command:clipboard-history"
     case searchEmoji = "command:search-emoji"
     case searchFiles = "command:search-files"
@@ -50,6 +51,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .translate: return BuiltInQuickAction.translate.title
         case .summarize: return BuiltInQuickAction.summarize.title
         case .calculatorHistory: return "Calculator History"
+        case .dictionaryHistory: return "Dictionary History"
         case .clipboardHistory: return "Clipboard History"
         case .searchEmoji: return "Search Emoji & Symbols"
         case .searchFiles: return "Search Files"
@@ -94,6 +96,7 @@ enum CommandID: String, CaseIterable, Sendable {
         case .translate: return BuiltInQuickAction.translate.symbol
         case .summarize: return BuiltInQuickAction.summarize.symbol
         case .calculatorHistory: return "plus.forwardslash.minus"
+        case .dictionaryHistory: return "clock.arrow.circlepath"
         case .clipboardHistory: return "doc.on.clipboard"
         case .searchEmoji: return "face.smiling"
         case .searchFiles: return "doc.text.magnifyingglass"

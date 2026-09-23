@@ -29,9 +29,9 @@ A backup carries five independently selectable categories, ticked on export and 
 - **The file carries a format version and a reader accepts only its own.** That is a guard, not a
   migration: the comparison is `==`, so an older and a newer file fail identically and by the same
   statement. Writing it any other way is the first line of a migration, and the project has none.
-- **Extensions, AI chat history, Keychain material and anything in `Caches` never travel.** An
-  extension is third-party code and third-party data; chat history and API keys stay on the Mac that
-  had them; a cache regenerates on its own.
+- **Extensions, AI and dictionary history, Keychain material and anything in `Caches` never travel.**
+  An extension is third-party code and third-party data; conversations, looked-up words and API keys
+  stay on the Mac that had them; a cache regenerates on its own.
 - **`BackupCategory` names every category, and its `descriptor` switch is exhaustive.** A new case
   fails to build until it names a label, a symbol, a bundle subpath and a count noun — the same
   bargain `AppEntry.Kind` makes, and why the bundle layout is never spelled out twice.

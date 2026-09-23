@@ -36,3 +36,11 @@ no bundled word list.
 
 The first enabled dictionary that knows the term answers, in Dictionary.app's own order. A term none of
 them knows reads "No definition found".
+
+## History
+
+Every completed lookup is saved on this Mac, including terms with no definition. Open **Dictionary
+History** from the launcher to search recent terms or run one again. History keeps the newest spelling
+of each case-insensitive term and is capped at 200 entries in the app's Application Support directory.
+⌃X deletes one row; ⌃⇧X clears all entries after confirmation. It stays on this Mac and is not carried
+in Tinycast backups or Raycast imports.

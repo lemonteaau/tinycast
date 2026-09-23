@@ -14,6 +14,7 @@ struct RootPaletteView: View {
     @Environment(FrequentEmojiStore.self) private var frequentEmoji
     @Environment(FileSearchSession.self) private var fileSearch
     @Environment(DictionarySession.self) private var dictionary
+    @Environment(DictionaryHistoryStore.self) private var dictionaryHistory
     @Environment(MenuSearchSession.self) private var menuSearch
     @Environment(WindowSwitchSession.self) private var windowSwitch
     @Environment(CalendarStore.self) private var calendarStore
@@ -97,6 +98,9 @@ struct RootPaletteView: View {
                 vm: vm, openActions: openActions, metrics: metrics)
         case .dictionary:
             return DictionaryScreen(session: dictionary, core: core, vm: vm)
+        case .dictionaryHistory:
+            return DictionaryHistoryScreen(
+                history: dictionaryHistory, core: core, vm: vm, openActions: openActions)
         case .calculatorHistory:
             return CalculatorHistoryScreen(
                 history: calcHistory, currencyRates: currencyRates, core: core, vm: vm,

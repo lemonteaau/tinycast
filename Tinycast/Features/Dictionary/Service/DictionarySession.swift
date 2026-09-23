@@ -12,11 +12,16 @@ final class DictionarySession {
 
     /// The last answered lookup; it stays up while the next term resolves, so typing never blanks.
     private(set) var lookup: Lookup?
+    private let history: DictionaryHistoryStore
     @ObservationIgnored private var term = ""
     @ObservationIgnored private var task: Task<Void, Never>?
 
     /// Coalesces a burst of keystrokes into the lookup for the word they settle on.
     private static let debounce = Duration.milliseconds(90)
+
+    init(history: DictionaryHistoryStore) {
+        self.history = history
+    }
 
     func lookUp(_ query: String) {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -34,7 +39,9 @@ final class DictionarySession {
                 DictionaryService.entry(for: term)
             }.value
             guard !Task.isCancelled else { return }
-            self?.lookup = Lookup(term: term, entry: entry)
+            guard let self else { return }
+            history.record(term)
+            self.lookup = Lookup(term: term, entry: entry)
         }
     }
 

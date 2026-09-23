@@ -44,7 +44,8 @@ final class AppCore {
     let runningApps = RunningAppsMonitor()
     let palette = PaletteState()
     let fileSearch = FileSearchSession()
-    let dictionary = DictionarySession()
+    let dictionaryHistory: DictionaryHistoryStore
+    let dictionary: DictionarySession
     let menuSearch = MenuSearchSession()
     let windowSwitch = WindowSwitchSession()
     let activationPolicy = ActivationPolicy()
@@ -176,7 +177,7 @@ final class AppCore {
         paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var cameraCoordinator = CameraCoordinator(core: self)
     @ObservationIgnored private(set) lazy var dictionaryCoordinator = DictionaryCoordinator(
-        paletteCoordinator: paletteCoordinator)
+        history: dictionaryHistory, paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var updateCoordinator = UpdateCoordinator(
         store: updateChecker, core: self)
     @ObservationIgnored private(set) lazy var supportCoordinator = SupportCoordinator(
@@ -210,9 +211,12 @@ final class AppCore {
         let launcherRanking = LauncherRankingStore()
         let settings = AppSettings()
         let chatHistory = ChatHistoryStore(directory: AppPaths.applicationSupport())
+        let dictionaryHistory = DictionaryHistoryStore()
         self.launcherRanking = launcherRanking
         self.settings = settings
         self.chatHistory = chatHistory
+        self.dictionaryHistory = dictionaryHistory
+        self.dictionary = DictionarySession(history: dictionaryHistory)
         supportReminders = SupportReminderStore(settings: settings)
         aiChat = AIChatState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)
@@ -242,6 +246,9 @@ final class AppCore {
             observeEffectiveAppearance()
             pinnedEmoji.onPersistenceFailure = { [weak self] in
                 self?.showMessage("Couldn't save Emoji & Symbols pins", tone: .danger)
+            }
+            dictionaryHistory.onPersistenceFailure = { [weak self] in
+                self?.showMessage("Couldn't save Dictionary History", tone: .danger)
             }
 
             appIndex.start(settings: settings)
