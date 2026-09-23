@@ -97,7 +97,9 @@ struct RootPaletteView: View {
                 history: core.chatHistory, chat: core.aiChat, coordinator: core.aiChatCoordinator,
                 vm: vm, openActions: openActions, metrics: metrics)
         case .dictionary:
-            return DictionaryScreen(session: dictionary, core: core, vm: vm)
+            return DictionaryScreen(
+                session: dictionary, history: dictionaryHistory, core: core, vm: vm,
+                openActions: openActions)
         case .dictionaryHistory:
             return DictionaryHistoryScreen(
                 history: dictionaryHistory, core: core, vm: vm, openActions: openActions)
@@ -538,6 +540,8 @@ struct RootPaletteView: View {
                     core.extensionCoordinator.exitExtensionScreen()
                 case .goBack:
                     goBack()
+                case .goToLauncher:
+                    core.paletteCoordinator.showPalette(mode: .launcher)
                 case .hidePalette:
                     core.paletteCoordinator.hidePalette()
                     // This behavior promises a root search on reopen, whatever the delay says.
@@ -1326,7 +1330,9 @@ struct RootPaletteView: View {
 
     /// An extension keeps its own stack, so it can have a step back the palette cannot see.
     private var hasBackStep: Bool {
-        vm.canGoBack || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
+        vm.canGoBack
+            || (vm.mode == .dictionary && settings.escapeKeyBehavior == .navigateBackOrClose)
+            || (vm.mode == .extensionCommand && extensions.navigationDepth > 1)
     }
 
     /// Never promises a step the click does not take: a root screen closes rather than backs.
@@ -1340,7 +1346,13 @@ struct RootPaletteView: View {
             core.extensionCoordinator.exitExtensionScreen()
             return
         }
-        if !vm.pop() { core.paletteCoordinator.hidePalette() }
+        if !vm.pop() {
+            if vm.mode == .dictionary {
+                core.paletteCoordinator.showPalette(mode: .launcher)
+            } else {
+                core.paletteCoordinator.hidePalette()
+            }
+        }
     }
 
     private func activateSelection() {

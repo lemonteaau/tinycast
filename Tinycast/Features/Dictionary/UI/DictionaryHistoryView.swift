@@ -3,6 +3,7 @@ import SwiftUI
 struct DictionaryHistoryList: View {
     @Environment(\.metrics) private var metrics
     let results: [DictionaryHistoryEntry]
+    let sectionTitle: String?
     let selectedID: DictionaryHistoryEntry.ID?
     let scroll: ScrollIntent
     let onSelect: (DictionaryHistoryEntry) -> Void
@@ -22,7 +23,7 @@ struct DictionaryHistoryList: View {
     }
 
     private var rows: [Row] {
-        var rows: [Row] = []
+        var rows: [Row] = sectionTitle.map { [.header($0)] } ?? []
         var currentBucket: DateBucket?
         for entry in results {
             let bucket = DateBucket(for: entry.createdAt)

@@ -109,8 +109,9 @@ it, while the Clipboard History hotkey does not. **The launcher is the exception
 root** — ⌘Space over an open clipboard opens the root search with nothing behind it, rather than
 stacking the launcher over the screen it replaced. The Dictionary screen is dismissed directly by
 ⌘Space, so closing a definition takes one press; that close resets the hidden palette to its root, so
-the next press always opens the launcher, even inside Pop to Root Search's delay. Nothing per-feature
-encodes the launcher navigation rule.
+the next press always opens the launcher, even inside Pop to Root Search's delay. Escape from a directly
+summoned dictionary screen returns to the launcher; when opened from a launcher result it restores that
+result. Nothing per-feature encodes the launcher navigation rule.
 
 `PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query and selection, enough
 that returning looks like never having left — and offers four motions over it:

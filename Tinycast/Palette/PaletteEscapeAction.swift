@@ -8,6 +8,7 @@ enum PaletteEscapeAction: Equatable {
     case clearQuery
     case exitExtensionScreen
     case goBack
+    case goToLauncher
     case hidePalette
 
     static func resolve(
@@ -19,8 +20,9 @@ enum PaletteEscapeAction: Equatable {
         if argumentFocused { return .leaveArgumentField }
         if !query.isEmpty { return .clearQuery }
         guard behavior == .navigateBackOrClose else { return .hidePalette }
-        // An extension pops its own navigation stack before the command is left.
+        // These modes have a back step outside the palette's ordinary stack.
         if mode == .extensionCommand { return .exitExtensionScreen }
+        if mode == .dictionary && !canGoBack { return .goToLauncher }
         return canGoBack ? .goBack : .hidePalette
     }
 

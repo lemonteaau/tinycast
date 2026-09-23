@@ -59,6 +59,7 @@ struct DictionaryHistoryScreen: PaletteScreen {
             let selected = entry(at: selection)
             DictionaryHistoryList(
                 results: rows,
+                sectionTitle: nil,
                 selectedID: selected?.id,
                 scroll: scroll,
                 onSelect: { item in vm.selection = rows.firstIndex(of: item) ?? 0 },

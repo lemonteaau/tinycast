@@ -216,7 +216,8 @@ final class AppCore {
         self.settings = settings
         self.chatHistory = chatHistory
         self.dictionaryHistory = dictionaryHistory
-        self.dictionary = DictionarySession(history: dictionaryHistory)
+        self.dictionary = DictionarySession(
+            history: dictionaryHistory, lookup: DictionaryService.entry(for:))
         supportReminders = SupportReminderStore(settings: settings)
         aiChat = AIChatState(history: chatHistory)
         appIndex = AppIndex(ranking: launcherRanking, aliases: aliases)

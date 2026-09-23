@@ -78,6 +78,14 @@ struct PaletteEscapeTests {
             .hidePalette,
             "the same screen summoned by its own hotkey is a root, so it hides")
         expect(
+            resolve(mode: .dictionary),
+            .goToLauncher,
+            "Escape from the summoned dictionary returns to the launcher")
+        expect(
+            resolve(mode: .dictionary, canGoBack: true),
+            .goBack,
+            "a dictionary opened from the launcher returns to its caller")
+        expect(
             resolve(mode: .ai, canGoBack: true),
             .goBack,
             "chat is no different: reached from the root, it goes back to it")

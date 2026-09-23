@@ -105,6 +105,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `GlobeTapDetector.swift`, `HotKeyBinding.swift`, `HyperKey.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
 | `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
+| `dictionary-session-test` | `DictionarySession.swift` — rapid prefixes coalesce, no-result terms are saved, and reset cancels a pending lookup |
 | `dictionary-history-test` | Local lookup-history persistence, case-insensitive deduplication, search, cap, removal and clearing |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
@@ -388,6 +389,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 
 ### Dictionary
 
+- The dictionary hotkey opens on recent lookups; Enter retries one and ⌘↵ opens Dictionary.app
+- Typing `h`, `hy`, `hyp`, `hype` quickly records only `hype` after the query settles
+- Escape from a directly summoned, empty dictionary screen returns to the launcher
 - A completed lookup appears in Dictionary History, including a term with no definition
 - Repeating a term with different letter case moves its single row to the top
 - Search filters history; Enter reopens Tinycast's definition and ⌘↵ opens Dictionary.app

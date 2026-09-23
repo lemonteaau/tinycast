@@ -39,8 +39,14 @@ them knows reads "No definition found".
 
 ## History
 
-Every completed lookup is saved on this Mac, including terms with no definition. Open **Dictionary
-History** from the launcher to search recent terms or run one again. History keeps the newest spelling
-of each case-insensitive term and is capped at 200 entries in the app's Application Support directory.
-⌃X deletes one row; ⌃⇧X clears all entries after confirmation. It stays on this Mac and is not carried
-in Tinycast backups or Raycast imports.
+Every completed lookup is saved on this Mac, including terms with no definition. The dictionary screen
+shows recent lookups as soon as it opens; select one and press ↵ to look it up again, or ⌘↵ to open it
+in Dictionary.app. The standalone **Dictionary History** command remains available for searching the
+full list. History waits until typing settles before saving, keeps the newest spelling of each
+case-insensitive term, and is capped at 200 entries in the app's Application Support directory. ⌃X
+deletes one row; ⌃⇧X clears all entries after confirmation. It stays on this Mac and is not carried in
+Tinycast backups or Raycast imports.
+
+When the dictionary screen was opened directly by its hotkey, Escape returns to the launcher. When it
+was opened from a launcher result, Escape restores that search and selection. A non-empty query still
+clears before Escape leaves the dictionary screen.
