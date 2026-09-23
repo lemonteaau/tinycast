@@ -50,7 +50,7 @@ final class PaletteCoordinator {
     }
 
     func togglePalette() {
-        if isShowing(.launcher) {
+        if isShowing(.launcher) || isShowing(.dictionary) {
             hidePalette()
         } else {
             showPalette(mode: .launcher, restoreAnyMode: true)

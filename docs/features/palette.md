@@ -120,7 +120,9 @@ behind it. Every mode command and every global hotkey funnels through `showPalet
 so typing "Clipboard History" at the root and pressing ↵ leaves a step back to the search that found
 it, while the Clipboard History hotkey does not. **The launcher is the exception, because it is the
 root** — ⌘Space over an open clipboard opens the root search with nothing behind it, rather than
-stacking the launcher over the screen it replaced. Nothing per-feature encodes this.
+stacking the launcher over the screen it replaced. The Dictionary screen is dismissed directly by
+⌘Space, so closing a definition takes one press. Nothing per-feature encodes the launcher navigation
+rule.
 
 `PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query and selection, enough
 that returning looks like never having left — and offers four motions over it:
