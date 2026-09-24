@@ -48,6 +48,7 @@ These are the things that quietly break the look if changed. Preserve them unles
 - **A dialog has three independent axes; never let one infer another.** The **icon** (`DialogRequest.symbol`, required) is always the *subject's* own glyph — a command being confirmed uses its `SystemAction.sfSymbol`, so the Restart dialog shows the same icon as the Restart row. Tone never picks an icon. The **tone** (`DialogTone`: `.neutral` / `.success` / `.danger`) tints only that glyph. The **button** takes its color from `DialogAction.Role` (`.standard` white / `.destructive` red / `.cancel` secondary), so a red-glyph security warning can still carry a plain white button — as "Import executable commands?" does.
 - **Resolve every glyph through `SymbolImage`, not `Image(systemName:)`.** Some catalog symbols are bundled assets in `Assets.xcassets` (`toggleBluetooth`), and `Image(systemName:)` silently renders nothing for those.
 - **↵ runs the primary action, Escape cancels, and Cancel always renders leading** (the left button), matching macOS convention. A button never prints its key cap; a deliberate hover reveals its outlined `KeyCapChip` in a `Tooltip`.
+- **In the palette, a hover label is Tinycast's `tooltip`, never `.help()`**: an AppKit tooltip never appears while the app sits inactive behind the non-activating panel. A Settings window activates the app, so `.help()` shows there and stays the label to use. The tooltip hangs above its control by default; a control in the palette header passes `edge: .bottom`, since above it is off the window, and a label may run to several lines — the chat's attachment pill lists every staged name.
 - **A transient readout is a HUD, not a dialog.** `VolumeHUDController`'s box is volume and mute only, since that one needs an actual level and number; every other success or info confirmation goes through `MessageHUDController`'s pill, whose trailing glyph *is* its `DialogTone`. A pill has no subject to name, so the icon rule above does not apply to it — and that mapping stays file-scoped so nothing can reach for it when building a `DialogRequest`. A new HUD means a new presenter, not a second shape bolted onto an existing controller.
 - **Glass is for floating controls, with dialogs as the deliberate modal exception.** The action capsule, menu circle and `PopoverMenu` use it inside the palette; dialogs apply one system `.glassEffect(.regular)` to their root surface. Dialog buttons stay matte so their roles remain legible. Both HUDs keep the lighter `panelScrim` → `GlassEffectView()` → `clipShape` recipe.
 
@@ -161,6 +162,12 @@ panel, the shortcut-recorder callout and the Notes switcher, and `menuRow` is de
 Notes adds `noteWindow 520×420` (opening size on a first run only), `noteWindowMinimum 320×220`,
 `noteTitlebar 44`, `noteTitleInset 120`, `noteEditorInset 16`, `noteSearchHeight 34`,
 `noteFooterHeight 28`, `noteGlyph 16`, `noteEmptyGlyph 28`, and `noteHeadingMenu 220×159`.
+
+AI Chat adds `aiChatWindow 960×660` (opening size), `aiChatWindowMinimum 680×440`, a sidebar of
+`aiChatSidebarMinimum 240`–`aiChatSidebarMaximum 340`, `aiChatDetailMinimum 440`,
+`aiChatReadingWidth 760` for the transcript and composer column, `aiChatComposerMaxHeight 180`, and
+`chatContextGauge 14` for the composer's context ring, and `chatContextCard 300` for the card it
+raises on hover.
 
 `keyCap` sizes the palette's keycap chips; `recorderKeyCap` (both size and radius) is the intentionally-smaller Settings shortcut-recorder chip.
 
@@ -308,6 +315,28 @@ title. Its hover buttons are hidden from accessibility so those actions are anno
 
 ---
 
+## AI Chat window
+
+Source: `Features/AI/UI/AIChatSplitViewController.swift`, `AIChatDetailView.swift`.
+
+AI Chat is a titled window built the way Settings is, not a palette sibling like Notes: a real
+`NSSplitViewController` whose sidebar item takes the system sidebar material, a unified toolbar with
+an inline title, and native `List`, `Menu` and context menus. Nothing about it scales with Interface
+Size. The composer is untinted Liquid Glass at `Radius.dialog`, stacked under the transcript so nothing
+scrolls behind it, with `.glass` capsules for its model and reasoning menus, and its glass on a
+background layer rather than the box.
+The title bar keeps the system's own toolbar band, as any document window's does. The context card
+the gauge raises on hover is glass over a solid `windowBackgroundColor`, because it rises over
+transcript text, and sits in the transcript's own frame at its bottom edge, so no window size can
+push it off screen. A reply's choices are `.glass` capsules that rise out of the composer's top
+edge. Find marks words in `Colors.findMatch` / `findCurrent`, the system yellow, with
+`findCurrentInk` black on the solid one in both appearances. Transcript lines sit
+`spacing.chatLine 4` apart on both surfaces. The transcript itself is the palette's `ChatTranscriptView`
+with `surface: .window`, which leaves out `edgeDissolve` and `thinScrollbar` — both are measured
+against the palette's bars — and caps the column at `aiChatReadingWidth`, centred.
+
+---
+
 ## The edge dissolve
 
 Source: `DesignSystem/Scrolling/EdgeDissolve.swift`.
@@ -391,9 +420,10 @@ Glass is normally for floating controls. The dialog root is the one modal-surfac
 - **`PopoverMenu`** uses `glassEffect(.regular)` with `menuPanel 16` corners and **no hand-tuned shadow** — Tahoe glass carries its own elevation; adding a drop shadow reads heavy and non-native. A footer menu raises only its attached bottom corner to the controls' 18-point radius, so the two silhouettes meet exactly.
 - Its native search field is a row-height sibling of the scroller, above header menus or below footer menus. It uses an 18pt horizontal inset to align with the visible row glyphs. The top field stays vertically symmetric; the bottom field keeps its 1pt optical lift. Menus omit the adjacent edge dissolve and centre **No Results** in one row when their filtered rows are empty. The 8pt resting list inset belongs to the scroll content, so rows can reach the surface edges without shifting their initial position; hover fills keep the dedicated `menuRow 10` corner.
 - `PopoverMenuRow`: leading glyph, label, trailing shortcut glyph and `menuHover` fill on hover. Menus animate in with opacity and scale from the anchored corner, stretching briefly to 1.003 before settling; `Theme.MenuMotion` owns the entry, settle and exit timings.
-- The glyph is a `PopoverMenuIcon`: `.symbol` (SF Symbol, `monochrome`, `menuSymbol` — or **red** when `isDestructive`) or `.file` (a real app icon via `IconCache`, used by the paste rows to show the paste target). `PopoverMenuItem` keeps a `systemImage:` convenience init, so symbol rows read exactly as before.
-- **Both glyph kinds share one square `menuIcon` (20) slot**, which pins one row height. A native SF Symbol uses the dedicated 14pt Medium `menuSymbol` font; file and brand icons keep their own artwork sizing inside the same slot.
+- The glyph is a `PopoverMenuIcon`: `.symbol` (SF Symbol, `monochrome`, `menuSymbol` — or **red** when `isDestructive`) `.file` (a real app icon via `IconCache`, used by the paste rows to show the paste target) or `.thumbnail` (a picture's own preview, cropped to the slot, used by the chat's staged-file rows). `PopoverMenuItem` keeps a `systemImage:` convenience init, so symbol rows read exactly as before.
+- **Every glyph kind shares one square `menuIcon` (20) slot**, which pins one row height. A native SF Symbol uses the dedicated 14pt Medium `menuSymbol` font; file and brand icons keep their own artwork sizing inside the same slot, and a thumbnail fills it.
 - Menu rows use the `md` icon→label gap; the fixed slot adds the remaining optical slack.
+- **A menu's rows are a `LazyVStack`**, so opening one builds only the rows in view: the model menu runs to hundreds, and laying all of them out took seconds. The viewport's height is worked out from the row count, never measured, so nothing needs the rest. The rows hold no AppKit control, which is what keeps a lazy stack safe here (see Settings lists below).
 
 ---
 
@@ -598,6 +628,10 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   is unaffected.
 - **`.settingsEnabled(_:)`, never a bare `.disabled(_:)`.** It dims as well as disables, so a
   switched-off row reads as unavailable rather than merely unresponsive.
+- **A secret is a `RevealableSecureField`, never a bare `SecureField`.** One eye, one place, so an API
+  key, a header value and a passphrase all offer the same way to check a pasted value before saving.
+  It re-hides on its own once the field is cleared, and its eye is disabled while it is empty.
+  A password field an extension declares, in a form or a preference, is left as it was.
 - **A `TextEditor` ignores `.disabled(_:)` on macOS** — its own and an ancestor's alike. The backing
   `NSTextView` keeps its caret, its keyboard and its selection, so a "disabled" prompt box still takes
   typing and still gives up its text to ⌘A ⌘C. Swap the editor for a `Text` when it must be read-only,
@@ -619,13 +653,14 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   Back/Forward chevrons. `SettingsWindowChrome` installs *before* the content mounts: the bridged toolbar
   restores the title flags it mounted over, so a later `titleVisibility = .visible` is undone on the
   first navigation.
-- **Settings is the one window that keeps the system titlebar.** `AppWindowController` builds every
-  window with `titlebarAppearsTransparent = true`, which opts the titlebar out of the system's glass
-  band; `SettingsWindowChrome.install(in:)` sets it back to `false`, so the band and its scroll
-  edge effect are drawn by AppKit as a pane's `Form` scrolls under it. `.fullSizeContentView` and
-  `titlebarSeparatorStyle = .none` stay — the content still runs under the bar, and a hairline would
-  split the surface the band unifies. It also clears `isMovableByWindowBackground`: stock Settings
-  isn't dragged by its content. Onboarding, Updates, Support and Command Output keep the transparent
+- **Settings and AI Chat are the windows that keep the system titlebar.** `AppWindowController` builds
+  every window with `titlebarAppearsTransparent = true`, which opts the titlebar out of the system's
+  glass band; `SettingsWindowChrome.install(in:)` and `AIChatWindowChrome.install(in:)` set it back to
+  `false`, so the band and its scroll edge effect are drawn by AppKit as a pane's `Form` or the
+  transcript scrolls under it. `.fullSizeContentView` and `titlebarSeparatorStyle = .none` stay — the
+  content still runs under the bar, and a hairline would split the surface the band unifies. Both also
+  clear `isMovableByWindowBackground`: stock Settings isn't dragged by its content, and a drag across a
+  transcript selects text. Onboarding, Updates, Support and Command Output keep the transparent
   titlebar they were tuned for. Never hand-draw a header band; a main surface takes the system's
   material, not `glassEffect`.
 - `SettingsComponents.swift` holds only what more than one pane or editor needs: **`SettingsRow`**,

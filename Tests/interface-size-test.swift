@@ -63,6 +63,7 @@ struct InterfaceSizeTests {
         expect(
             m.spacing.chatFollowTailSlack, Theme.Spacing.chatFollowTailSlack,
             "spacing.chatFollowTailSlack")
+        expect(m.spacing.chatLine, Theme.Spacing.chatLine, "spacing.chatLine")
 
         expect(m.radius.panel, Theme.Radius.panel, "radius.panel")
         expect(m.radius.row, Theme.Radius.row, "radius.row")
@@ -84,6 +85,8 @@ struct InterfaceSizeTests {
         expect(m.size.panelHeight, Theme.Size.panelHeight, "size.panelHeight")
         expect(m.size.headerHeight, Theme.Size.headerHeight, "size.headerHeight")
         expect(m.size.headerIconSlot, Theme.Size.headerIconSlot, "size.headerIconSlot")
+        expect(
+            m.size.searchFieldMinWidth, Theme.Size.searchFieldMinWidth, "size.searchFieldMinWidth")
         expect(m.size.headerPadding, Theme.Size.headerPadding, "size.headerPadding")
         expect(m.size.compactHeight, Theme.Size.compactHeight, "size.compactHeight")
         expect(m.size.bottomBarHeight, Theme.Size.bottomBarHeight, "size.bottomBarHeight")
@@ -128,8 +131,6 @@ struct InterfaceSizeTests {
         expect(m.size.chatImageThumb, Theme.Size.chatImageThumb, "size.chatImageThumb")
         expect(m.size.chatAttachmentGlyph, Theme.Size.chatAttachmentGlyph, "size.chatAttachmentGlyph")
         expect(m.size.chatAttachmentThumb, Theme.Size.chatAttachmentThumb, "size.chatAttachmentThumb")
-        expect(
-            m.size.chatAttachmentRemove, Theme.Size.chatAttachmentRemove, "size.chatAttachmentRemove")
         expect(m.size.chatAttachmentInset, Theme.Size.chatAttachmentInset, "size.chatAttachmentInset")
         expect(m.size.quickActionPanel, Theme.Size.quickActionPanel, "size.quickActionPanel")
         expect(
@@ -288,6 +289,7 @@ struct InterfaceSizeTests {
             ("spacing.emojiSectionSpacing", m.spacing.emojiSectionSpacing),
             ("spacing.chatTranscriptBottom", m.spacing.chatTranscriptBottom),
             ("spacing.chatFollowTailSlack", m.spacing.chatFollowTailSlack),
+            ("spacing.chatLine", m.spacing.chatLine),
             ("radius.panel", m.radius.panel), ("radius.row", m.radius.row),
             ("radius.emojiCell", m.radius.emojiCell), ("radius.menu", m.radius.menu),
             ("radius.menuRow", m.radius.menuRow),
@@ -300,6 +302,7 @@ struct InterfaceSizeTests {
             ("size.panelWidth", m.size.panelWidth), ("size.panelHeight", m.size.panelHeight),
             ("size.headerHeight", m.size.headerHeight),
             ("size.headerIconSlot", m.size.headerIconSlot),
+            ("size.searchFieldMinWidth", m.size.searchFieldMinWidth),
             ("size.headerPadding", m.size.headerPadding),
             ("size.compactHeight", m.size.compactHeight),
             ("size.bottomBarHeight", m.size.bottomBarHeight),
@@ -328,7 +331,6 @@ struct InterfaceSizeTests {
             ("size.chatImageThumb", m.size.chatImageThumb),
             ("size.chatAttachmentGlyph", m.size.chatAttachmentGlyph),
             ("size.chatAttachmentThumb", m.size.chatAttachmentThumb),
-            ("size.chatAttachmentRemove", m.size.chatAttachmentRemove),
             ("size.chatAttachmentInset", m.size.chatAttachmentInset),
             ("size.quickActionPanel", m.size.quickActionPanel),
             ("size.quickActionHeaderIcon", m.size.quickActionHeaderIcon),
