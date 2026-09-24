@@ -189,10 +189,11 @@ jobs:
           } > "$RUNNER_TEMP/notes.md"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --target "$(git rev-parse HEAD)" --draft \
-              --title "Tinycast Fork $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+              --title "Tinycast $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
           fi
           gh release upload "$TAG" dist/* --clobber
-          gh release edit "$TAG" --draft=false --latest --notes-file "$RUNNER_TEMP/notes.md"
+          gh release edit "$TAG" --title "Tinycast $VERSION" --draft=false --latest \
+            --notes-file "$RUNNER_TEMP/notes.md"
           echo "Published https://github.com/$GH_REPO/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Clean signing material
