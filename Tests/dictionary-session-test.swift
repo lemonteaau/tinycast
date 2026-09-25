@@ -15,6 +15,14 @@ struct DictionarySessionTests {
         }
     }
 
+    static func waitForLookup(_ session: DictionarySession, term: String) async {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while session.lookup?.term != term, ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        check(session.lookup?.term == term, "lookup completes before the timeout: \(term)")
+    }
+
     static func main() async {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("dictionary-session-test-\(UUID().uuidString)")
@@ -28,11 +36,10 @@ struct DictionarySessionTests {
 
         for term in ["h", "hy", "hyp", "hype"] {
             session.lookUp(term)
-            try? await Task.sleep(for: .milliseconds(30))
         }
         check(history.entries.isEmpty, "typing a word's prefixes does not create history rows")
 
-        try? await Task.sleep(for: .milliseconds(220))
+        await waitForLookup(session, term: "hype")
         check(history.entries.map(\.term) == ["hype"], "the settled query is recorded once")
         check(
             session.lookup?.term == "hype" && session.lookup?.entry == nil,
@@ -40,8 +47,14 @@ struct DictionarySessionTests {
 
         session.lookUp("abandoned")
         session.reset()
-        try? await Task.sleep(for: .milliseconds(220))
-        check(history.entries.map(\.term) == ["hype"], "reset cancels an unfinished query")
+        check(session.lookup == nil, "reset clears the displayed lookup")
+        let nextSession = DictionarySession(
+            history: history, debounce: .milliseconds(180), lookup: { _ in nil })
+        nextSession.lookUp("resumed")
+        await waitForLookup(nextSession, term: "resumed")
+        check(
+            history.entries.map(\.term) == ["resumed", "hype"] && session.lookup == nil,
+            "reset cancels an unfinished query while subsequent lookups still complete")
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }

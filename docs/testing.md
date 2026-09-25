@@ -49,6 +49,10 @@ harnesses are not still running after everything else has finished.
 The script is the **only** place the harness set is written down. Nothing runs it for you, so run it
 before you open a PR. Adding a harness means adding one `run` line.
 
+`dictionary-session-test` waits for published lookup results with a bounded deadline. Query bursts
+are submitted together so scheduler delays cannot turn a prefix into a settled query; cancellation
+is checked while a separate session completes against the same history store.
+
 Each harness compiles the **shipped sources** it guards rather than a copy of them, which is what makes
 the pure-layer boundary real: a harness that stops *compiling* means AppKit or SwiftUI has leaked into a
 `Model/` folder, or an effect has leaked into a decision. That is a more common failure than a broken
