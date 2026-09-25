@@ -52,6 +52,8 @@ before you open a PR. Adding a harness means adding one `run` line.
 `dictionary-session-test` waits for published lookup results with a bounded deadline. Query bursts
 are submitted together so scheduler delays cannot turn a prefix into a settled query; cancellation
 is checked while a separate session completes against the same history store.
+The extension menu harness likewise waits for queued menus to open and closed sessions to unload,
+with a deadline, rather than assuming those transitions finish within a fixed sleep.
 
 Each harness compiles the **shipped sources** it guards rather than a copy of them, which is what makes
 the pure-layer boundary real: a harness that stops *compiling* means AppKit or SwiftUI has leaked into a

@@ -3,6 +3,14 @@ import Foundation
 
 extension ExtensionTests {
     @MainActor
+    static func waitForMenuCondition(_ condition: () -> Bool) async {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while !condition(), ContinuousClock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @MainActor
     static func runInstalledMenuBar(_ owner: InstalledExtension, command: ExtensionCommand) async {
         _ = NSApplication.shared
         NSApp.setActivationPolicy(.accessory)
@@ -658,13 +666,16 @@ extension ExtensionTests {
         check(
             "another menu waits for every overlapping action",
             boots.count == beforeReopen && manager.isRunning)
-        await settle(550)
+        await waitForMenuCondition {
+            boots.last?.0 == "second"
+                && storage.localStorageValue(extension: "first", key: "completed") == .number(2)
+        }
         check(
             "both actions finish before the queued menu opens",
             boots.last?.0 == "second"
                 && storage.localStorageValue(extension: "first", key: "completed") == .number(2))
         secondController.menuDidClose(secondController.menu)
-        await settle(200)
+        await waitForMenuCondition { !manager.isRunning && lastRuntime == nil }
         check("reopened action sessions unload after closing", !manager.isRunning && lastRuntime == nil)
 
         controller.menuWillOpen(controller.menu)
