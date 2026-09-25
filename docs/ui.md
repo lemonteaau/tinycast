@@ -541,11 +541,13 @@ sole owner rule) and is the only presenter, so every confirmation in the app loo
   read left to right and the outcome is the last thing you want to land on. Auto-dismisses after
   `Duration.messageHUD` (2.4s) — longer than the volume box, since a sentence needs reading time and a
   level only needs a glance — and a repeat call replaces rather than stacks.
-- **The same pill reports work still running**, through `showProgress(message:)`: a Quick Action set to
+- **The same pill reports work still running**, through `showProgress(message:onCancel:)`: a Quick Action set to
   replace has no panel to watch the answer arrive in, so the pill says `Fixing Grammar…` in its place
   and the result message replaces it when the model is done. Its trailing mark is a spinner rather
   than a tone, which is why `MessageHUDView.Accessory` exists — a tone says how something *went*, and
-  nothing has gone anywhere yet. The spinner is **`progress.indicator` with
+  nothing has gone anywhere yet. When `onCancel` is provided, hovering over the pill lights it up,
+  turns the spinner into an `xmark`, and clicking anywhere on the pill cancels the in-flight task.
+  The spinner is **`progress.indicator` with
   `.symbolEffect(.variableColor)`, never a `ProgressView`**: AppKit draws that one itself and ignores
   every tint given to it, so a blue spinner is only reachable as a symbol. Progress has no natural
   dwell, so it is shown with `dwells: false` and stays up until something replaces it or
@@ -583,6 +585,23 @@ second later, which read as a thick bar flashing at the right edge of each pane.
 per-scroll-view shim: chasing that flip after the fact is what caused the flash.
 
 ---
+
+## The room preview
+
+The one full-screen surface besides the drop guides, and like them a readout: one click-through,
+never-key panel per display at `.paletteDropGuide`, under the palette. It is the exception to "glass
+only on floating controls" in the other direction — the whole desk is `NSVisualEffectView`
+`.fullScreenUI` blurred behind the window and dimmed by `roomPreviewDim`, so only the cards read.
+
+A card is a solid window-to-be, not a row: `Theme.Radius.roomCard` (16), `roomCardFill` in both
+appearances so the desk never shows through it, a `roomCardStroke` accent border, and one shadow.
+Its title bar carries three quiet dots, the app name (`.headline`) and the window title. The icon
+grows to `roomCardIconLarge` on a card larger than 320 pt both ways, hides on one shorter than 160,
+and moves out from under the palette.
+
+Motion is `Theme.RoomMotion.glide` for a card that changes place, a fade for one that arrives or
+leaves, and `fadeIn`/`fadeOut` for the panels; Reduce Motion removes all of it. See
+[features/window-rooms.md](features/window-rooms.md#the-preview).
 
 ## The camera preview panel
 
@@ -664,6 +683,8 @@ system-drawn and a pane reads exactly as macOS System Settings does.
   titlebar they were tuned for. Never hand-draw a header band; a main surface takes the system's
   material, not `glassEffect`.
 - `SettingsComponents.swift` holds only what more than one pane or editor needs: **`SettingsRow`**,
+  **`SettingsTabIcon`** (the sidebar tile reused by feature switches),
+  **`SettingsFeatureToggleLabel`** (the icon, title and subtitle of a feature's master switch),
   **`FeatureSwitchSection`** (a feature's master switch plus its launcher-visibility companion),
   **`SettingsFilterField`** (the filter row above a long list), **`launcherVisibilityHelp()`**, and the
   Settings editor header, fields and surface. `ModalActionButtonStyle.swift` keeps every borderless surface's actions on one

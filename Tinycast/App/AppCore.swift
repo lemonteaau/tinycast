@@ -12,6 +12,11 @@ final class AppCore {
     let quicklinks = QuicklinkStore()
     let windowLayouts = WindowLayoutStore()
     let customWindowSizes = CustomWindowSizeStore()
+    let rooms = RoomStore()
+    let roomMinimums = RoomMinimumSizeStore()
+    let roomParking = RoomParkingLedger(
+        fileURL: AppPaths.applicationSupport().appendingPathComponent("room-parking.json"))
+    let roomSession = RoomSession()
     let clipboardStore = ClipboardStore()
     @ObservationIgnored private var clipboardTextIndexer: ClipboardTextIndexer?
     let clipboardManager: ClipboardManager
@@ -118,6 +123,11 @@ final class AppCore {
         favorites: favorites, visibility: visibility, ranking: launcherRanking, aliases: aliases,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
         core: self)
+    @ObservationIgnored private(set) lazy var roomCoordinator = RoomCoordinator(
+        store: rooms, minimums: roomMinimums, ledger: roomParking, session: roomSession,
+        settings: settings, appIndex: appIndex, hotKeys: hotKeys, favorites: favorites,
+        visibility: visibility, ranking: launcherRanking, aliases: aliases, palette: palette,
+        paletteCoordinator: paletteCoordinator, core: self)
     @ObservationIgnored private(set) lazy var customCommandCoordinator = CustomCommandCoordinator(
         store: customCommands, settings: settings, appIndex: appIndex,
         paletteCoordinator: paletteCoordinator, settingsCoordinator: settingsCoordinator,
@@ -289,6 +299,10 @@ final class AppCore {
                 self?.windowLayoutCoordinator.applyWindowLayoutsPresence()
             }
             windowLayoutCoordinator.applyWindowLayoutsPresence()
+            rooms.onChange = { [weak self] _ in self?.roomCoordinator.applyRoomsPresence() }
+            roomCoordinator.applyRoomsPresence()
+            // A crash can leave windows parked off-screen; they come home before anything else.
+            roomCoordinator.recoverParkedWindows()
             quicklinks.onChange = { [weak self] _ in
                 self?.quicklinkCoordinator.applyQuicklinksPresence()
             }
@@ -303,6 +317,7 @@ final class AppCore {
                 switch mode {
                 case .menuSearch: self?.menuSearchCoordinator.load()
                 case .switchWindows: self?.windowSwitchCoordinator.load()
+                case .rooms, .roomWindows: self?.roomCoordinator.load()
                 default: break
                 }
             }
@@ -336,6 +351,7 @@ final class AppCore {
             hotKeys.onRunWindowLayout = { [weak self] id in
                 self?.windowLayoutCoordinator.runWindowLayout(id: id)
             }
+            hotKeys.onEnterRoom = { [weak self] id in self?.roomCoordinator.enterRoom(id: id) }
             hotKeys.onRunCustomWindowSize = { [weak self] id in
                 self?.windowCommandCoordinator.runCustomWindowSize(id: id)
             }
@@ -376,6 +392,7 @@ final class AppCore {
                 customCommandIDs: Set(customCommands.commands.map(\.id)),
                 quicklinkIDs: Set(quicklinks.quicklinks.map(\.id)),
                 windowLayoutIDs: Set(windowLayouts.layouts.map(\.id)),
+                windowRoomIDs: Set(rooms.rooms.map(\.id)),
                 customWindowSizeIDs: Set(customWindowSizes.sizes.map(\.id)),
                 quickActionIDs: Set(customQuickActions.actions.map(\.id)))
             // Keeps running while Carbon pauses: the recorder needs its rewritten flags.
@@ -450,6 +467,8 @@ final class AppCore {
             return customQuickActions.action(id: id)?.name
         case .windowLayout(let id):
             return windowLayouts.layout(id: id)?.name
+        case .windowRoom(let id):
+            return rooms.room(id: id)?.name
         case .customWindowSize(let id):
             return customWindowSizes.size(id: id)?.name
         case .appleShortcut(let id):
@@ -496,6 +515,7 @@ final class AppCore {
         // Caps Lock first: its remap is the one teardown that outlives the process.
         hyperKeyTap.prepareForTermination()
         windowLayoutCoordinator.prepareForTermination()
+        roomCoordinator.prepareForTermination()
         inputSourceSwitcher.endSession()
         textInjector.prepareForTermination()
         snippetListener.stop()
@@ -556,6 +576,11 @@ final class AppCore {
                 _ = $0.windowManagementEnabled
                 _ = $0.windowLayoutsShowInLauncher
             }, reproject: { $0.windowLayoutCoordinator.applyWindowLayoutsPresence() })
+        track(
+            {
+                _ = $0.windowManagementEnabled
+                _ = $0.windowRoomsShowInLauncher
+            }, reproject: { $0.roomCoordinator.applyEnabled() })
         track(
             {
                 _ = $0.customCommandsEnabled
@@ -736,8 +761,8 @@ final class AppCore {
     }
 
     /// The same pill with a spinner, for work the reader started and cannot otherwise see running.
-    func showProgress(_ message: String) {
-        messageHUD.showProgress(message: message)
+    func showProgress(_ message: String, onCancel: (() -> Void)? = nil) {
+        messageHUD.showProgress(message: message, onCancel: onCancel)
     }
 
     func hideProgress() {

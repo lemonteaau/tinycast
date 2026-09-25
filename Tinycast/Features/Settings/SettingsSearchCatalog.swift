@@ -177,11 +177,11 @@ enum SettingsSearchCatalog {
     private static let applications: [SettingsSearchEntry] = [
         .init(pane: .applications, keywords: ["apps", "index", "launcher"]),
         .init(
-            group: .applicationsSearchScopes, "Search Scopes",
-            keywords: ["folders", "indexed", "locations", "add folder"]),
-        .init(
             .applicationsApplications, "Enable Applications",
             keywords: ["hide apps", "visibility"]),
+        .init(
+            group: .applicationsSearchScopes, "Search Scopes",
+            keywords: ["folders", "indexed", "locations", "add folder"]),
         .init(
             group: .applicationsApplications, "Aliases and shortcuts",
             keywords: ["alias", "hotkey", "per app", "hide"])
@@ -349,10 +349,10 @@ enum SettingsSearchCatalog {
             .notesNotes, "Enable Notes",
             keywords: ["markdown", "scratchpad"]),
         .init(
-            .notesNotes, "Render Markdown",
+            .notesOptions, "Render Markdown",
             keywords: ["markdown", "formatting", "preview", "raw", "source"]),
         .init(
-            .notesNotes, "Show Formatting Bar",
+            .notesOptions, "Show Formatting Bar",
             keywords: ["toolbar", "format bar", "buttons", "bold", "heading", "markdown"]),
         .init(
             group: .notesCommands, "Notes commands",
@@ -412,8 +412,10 @@ enum SettingsSearchCatalog {
             group: .windowManagementOptions, "Window commands",
             keywords: ["shortcut", "left half", "maximize", "center"]),
         .init(
-            group: .windowManagementLayoutCommands, "Layout commands",
-            keywords: ["shortcut", "launcher", "create layout", "capture"]),
+            group: .windowManagementLayoutCommands, "Layout and room commands",
+            keywords: [
+                "shortcut", "launcher", "create layout", "capture", "switch room", "create room"
+            ]),
         .init(
             group: .windowManagementLayouts, "Window Layouts",
             keywords: [
@@ -429,6 +431,18 @@ enum SettingsSearchCatalog {
         .init(
             .windowManagementLayouts, "Create Layout from Current Windows",
             keywords: ["capture", "snapshot", "current", "save arrangement"]),
+        .init(
+            group: .windowManagementRooms, "Rooms",
+            keywords: [
+                "room", "project", "workspace", "tile", "focus", "columns", "grid", "stack",
+                "hide other apps", "switch project"
+            ]),
+        .init(
+            .windowManagementRooms, "Show rooms in launcher",
+            keywords: ["hide", "visibility", "search"]),
+        .init(
+            .windowManagementRooms, "New Room",
+            keywords: ["add", "create", "project", "windows"]),
         .init(
             group: .windowManagementCustomSizes, "Custom Sizes",
             keywords: ["custom", "size", "resize", "dimensions", "pixels", "points", "percent"]),
