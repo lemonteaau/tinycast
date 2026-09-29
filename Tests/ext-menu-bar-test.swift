@@ -593,6 +593,7 @@ extension ExtensionTests {
         check("install does not run a menu command", boots.isEmpty && metadata.menuBarCommands().isEmpty)
         manager.run(first, command: first.manifest.commands[0])
         await settle(400)
+        await waitForMenuCondition { !manager.isRunning && lastRuntime == nil }
         check("settled menu keeps only a snapshot", !manager.isRunning && lastRuntime == nil)
         check("manual launch snapshots title", snapshot(firstRef)?.title == "userInitiated")
         check(
@@ -602,6 +603,10 @@ extension ExtensionTests {
         let controller = manager.controller(for: firstRef, owner: first)
         controller.menuWillOpen(controller.menu)
         await settle(300)
+        await waitForMenuCondition {
+            boots.count == 2 && manager.isRunning
+                && controller.menu.items.contains { $0.title == "Alternate" }
+        }
         check("opening a menu reloads its runtime", boots.count == 2 && manager.isRunning)
         let items = controller.menu.items
         check("native section header", items.first?.isSectionHeader == true && items.first?.title == "Usage")

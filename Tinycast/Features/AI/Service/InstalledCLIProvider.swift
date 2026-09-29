@@ -454,8 +454,11 @@ private final class InstalledCLITurnRunner {
 
     /// The reader's decision, through the same trust policy and dialog the BYOK loop asks with.
     private func answer(_ request: ClaudeControlProtocol.Request, token: TurnToken) {
+        let earlier = consents.last
         consents.append(
             Task { [weak self] in
+                // Consent hops off the main actor, so only this wait keeps the questions in order.
+                await earlier?.value
                 let allowed = await self?.toolServers?.consent(request.call) ?? false
                 guard let self, self.token === token else { return }
                 guard
