@@ -88,7 +88,9 @@ bottom with the model picker. ⌘J hands a Quick AI conversation to the window.
   `message_thinking` keeps them; `requestMessages` never sends them back. A route that only says
   it is thinking still just shows "Thinking…". How much there is to read is the route's call:
   Claude streams full summaries, while Grok's CLI sends a line or two in the clear and the rest of
-  its reasoning encrypted, so a Grok fold is short by design, not by truncation.
+  its reasoning encrypted, so a Grok fold is short by design, not by truncation. An OpenAI-shaped
+  route also counts a `<think>…</think>` block that opens its content, and only there, so a
+  literal `<think>` later in an answer stays text.
 - **A chat is named by its harness.** As soon as a chat's first question is sent — so the title
   lands while the answer streams — again after an answer if that failed, and never over a rename,
   `AIChatCoordinator.nameIfNeeded` asks for a title: Claude's CLI through its own
@@ -141,7 +143,8 @@ bottom with the model picker. ⌘J hands a Quick AI conversation to the window.
 - **Installed commands reuse their own login.** Tinycast launches the user's `codex`, `claude`, `grok` or
   `opencode` executable without asking for or storing another key. Codex inherits the user's normal
   home and credential-store setting; Claude, Grok, OpenCode and Cursor inherit their normal configuration. Tinycast
-  never reads those credential files, browser cookies or undocumented web endpoints.
+  never reads those credential files, browser cookies or undocumented web endpoints. A Codex route
+  with no account is ready only when `account/read` explicitly says `requiresOpenaiAuth: false`.
 - **Codex runs Tinycast's MCP servers and nothing else.** The app-server still launches with every
   feature flag off and a read-only, network-disabled sandbox, and every server request but one is
   declined. What changed is the list: the servers the reader configured for their own Codex are
@@ -330,8 +333,10 @@ was, and the choice rides in `AIModelSelection.effort` like every other route's.
 
 `AIProvider.stream(_:)` accepts provider-neutral messages, optional instructions, a maximum output
 token count and the tools the turn may call. It returns an `AsyncThrowingStream` of text, thinking
-state, tool activity, usage and completion. OpenAI-
-compatible reasoning fields are surfaced as `.thinking`, never mixed into answer text. Anthropic
+state, tool activity, usage and completion. OpenAI-compatible reasoning fields and a response's
+leading `<think>…</think>` content block are surfaced as `.thinking` and `.reasoning`, never mixed
+into answer text. `AIThinkTagDecoder` holds back a tag split across deltas, drops the whitespace
+between the closing tag and the answer, and flushes an unclosed block as reasoning. Anthropic
 system messages are lifted into its top-level `system` field; the other HTTP routes keep system
 messages in the OpenAI message array.
 
@@ -367,10 +372,10 @@ search, beside `AI Chat`'s; either shortcut keeps working while its command is h
 nothing at all while the feature is off. The palette search field becomes the single-line composer.
 The footer pill and Return are one action, `activate`: Send, or Stop while a response streams — an
 empty composer sends nothing, so the pill never needs a disabled state. The header's trailing model
-switcher uses the same in-window menu control as Clipboard's type filter and changes the chat route
-for the next message. For installed routes and OpenRouter models whose catalog reports the
-capability, it also shows the supported reasoning efforts and changes the chat effort for the next
-message. Other API routes keep their provider default because their model catalogs expose no
+switcher opens by click or ⌘P, uses the same in-window menu control as Clipboard's type filter and
+changes the chat route for the next message. For installed routes and OpenRouter models whose catalog
+reports the capability, it also shows the supported reasoning efforts and changes the chat effort for
+the next message. Other API routes keep their provider default because their model catalogs expose no
 portable effort contract. Neither change interrupts a response already streaming; stopping one is
 the pill's job, so the header never has to fit a third control beside the switcher.
 
@@ -401,7 +406,8 @@ menu's own chords, and dies with the window.
   paragraph, list item, code block and table cell, in order — and lists every occurrence as
   (message, drawn text, index within it). A reply's hidden choices fence never matches. A drawn
   text is named by its position path (segment, block, item or cell), not its content, so two
-  identical table cells are two matches. `ChatTextHighlight` rides the environment into every text
+  identical table cells are two matches. An equation draws as one character, so find never matches
+  inside its source. `ChatTextHighlight` rides the environment into every text
   a message draws, which marks all its matches in the Mac's find yellow and the current one solid;
   a clear marker over the current match takes the scroll anchor, so the transcript centres on the
   word itself.
@@ -415,6 +421,22 @@ menu's own chords, and dies with the window.
   and tool rows stay separate views, so a drag spans one segment's text. A fold holding a match
   opens. A glass counter at the transcript's top edge says "3 of 17" with the same steps as
   Return / ⇧↩ in the field and ⌘G / ⇧⌘G anywhere. The sidebar's own filter is still there, by click.
+- **Math is typeset natively, in that same text.** `\(…\)` and `$…$` are inline math, `\[…\]` and
+  `$$…$$` display math. `MarkdownMath` finds them before Foundation's Markdown parse, which would
+  eat their backslashes. A `$` pairs only by Pandoc's rule — hugging its content, no digit after the
+  closer — so "$5 and $10" stays prose, and code spans and `\$` are never math. `MathNode` parses a
+  bounded LaTeX subset: at a command it does not know, past 40 levels of nesting or past 4,000
+  characters, a formula shows as its source (a display one as a `latex` code block) rather than as a
+  guess. `MathLayoutEngine` sets it by TeX's rules in STIX Two Math, which macOS ships, reading sizes,
+  gaps and stretchy glyphs from the font's OpenType MATH table, so no dependency is involved. Each
+  formula is one `MathAttachmentCell` character carrying its source: selection, citations and find
+  keep their offsets, copying or dragging gives back the LaTeX as written
+  (`ChatSelectableTextView.writeSelection`), and a formula wider than its line scales down to fit.
+  While a reply streams, `MarkdownBlock.parse(_:midStream:)` holds back an equation still open at
+  the very end — a display one as a centred, muted `…`, an inline one withheld — so it neither
+  flashes as source nor jumps from the left to the centre. Only the last segment of a streaming reply
+  is mid-stream, an opener the stream has passed stays visible, and a lone `$` is never held back,
+  since it may be a price.
 - **Actions** (⌘K): Quick AI's ⌘K menu for a window, on the same chords — Stop Response (`⌘.`), New
   Chat (`⌘N`), Regenerate (`⌘R`), Copy Last Response (`⇧⌘C`), Remove Attachments, Find in Chat
   (`⌘F`) and AI Settings (`⌥⌘,`) — plus what only a saved chat has: Copy Chat, Pin and Delete.
@@ -459,7 +481,7 @@ menu's own chords, and dies with the window.
 `AIChatState` turns provider-neutral stream events into one live assistant message. Thinking state is
 shown without entering the transcript, partial text is preserved on failure, cancellation invalidates
 the active generation, and only completed assistant messages become context for the next request.
-Assistant replies render Markdown; user messages remain literal. A reply keeps streaming while the
+Assistant replies render Markdown and LaTeX math; user messages remain literal. A reply keeps streaming while the
 palette is hidden, the window is closed or showing another chat — the state is `AppCore`'s, not the
 view's — and is saved when it finishes.
 
@@ -524,8 +546,9 @@ window, and every chat action either surface sends — is the nineteenth feature
 - An `@server` chip — the tools glyph alone, since the handle is still in the text — or a staged
   pill follows the typed text with a clear gap, and a long draft stops it right before the model
   name, the same gap with a reasoning menu and without.
-- Clicking it opens the same anchored menu shape as Clipboard's type filter; arrows, Return and Escape
-  operate the menu without changing the draft.
+- Clicking it or pressing ⌘P opens the same anchored menu shape as Clipboard's type filter;
+  arrows, Return and Escape operate the menu without changing the draft.
+- Pressing ⌘P again closes the model menu and returns focus to the composer.
 - Repeatedly clicking either the model switcher or the type filter opens and closes every time, even
   when the next click lands immediately after dismissal or a few points off the first one.
 - Selecting a model updates the button immediately and the next message reaches that route.
@@ -553,18 +576,24 @@ window, and every chat action either surface sends — is the nineteenth feature
   the unsent line in its composer, and Quick AI is empty on the next summon.
 - In the window, send, then press ⌘N before the reply ends: the old chat keeps its sidebar spinner,
   finishes, and reopens complete. Rename one, send another turn in it, and the name holds.
+- Ask for the quadratic formula in LaTeX: while the reply streams, its display equation is a centred
+  `…` that turns into the equation in place; selecting across it and copying pastes its `$$…$$`
+  source. A reply that mentions "$5 and $10" keeps both prices as prose, and in a narrow Quick AI a
+  long equation shrinks to fit rather than running off the edge.
 - Return sends, ⇧↩ breaks the line, and a Japanese IME's Return confirms its text without sending.
 - Drop a PDF on the pane with a text-only model selected: the HUD refuses it, as a paste would.
 - Collapse the sidebar with the toolbar button; ⌘N and ⌘Q (Close Window) still work, and ⌘Q with
   Settings in front closes Settings instead.
-- Harnesses: `ai-provider-test` (endpoints, request bodies, stream decoding, persistence repair,
+- Harnesses: `ai-provider-test` (endpoints, request bodies, stream decoding including leading
+  think tags across content and SSE splits, persistence repair,
   Codex framing, on-device routing, the two MCP launch encodings and the two consent channels, the
   shown-model and switched-off-route rules, and a tool's override from settings to launch),
-  `ai-chat-test` (`ChatSession`, `MarkdownBlock`, `ChatHistoryStore` with renames and pins,
+  `ai-chat-test` (`ChatSession`, `MarkdownBlock` with its math delimiters, LaTeX subset and
+  mid-stream hold-back, `ChatHistoryStore` with renames and pins,
   `AIToolLoopProvider`, regenerate, and `AIChatSurfacesState`'s one-live-place rule),
   `codex-turn-test` (the Stop path, driven against a stub app-server stalled where Stop races the
   turn ID, plus the MCP launch boundary, one launch for concurrent starts, the elicitation, the
-  rows and the call cap),
+  rows, the call cap and a custom provider's access without an account),
   `installed-ai-test` (Claude/Grok/OpenCode/Cursor flags, prompt
   framing, streaming and cleanup, and Claude's private MCP configuration, control channel, round
   cap and managed-policy branch, a reader's variables against Tinycast's own, and a set command
@@ -606,7 +635,12 @@ app-server lifecycle and discovered account metadata. Production never sets `COD
 server uses the same login and credential store as the user's normal Codex command. Tinycast supplies
 only a private working directory. The server stops after ten idle minutes, when AI is switched off or
 when the app terminates, and restarts on demand. Account state, model availability and rate-limit
-windows come from the supported app-server protocol.
+windows come from the supported app-server protocol. A custom Codex provider can report no account
+and `requiresOpenaiAuth: false`; Tinycast then loads its models and runs turns without inventing an
+account or asking for `codex login`. A missing or true flag still requires sign-in. A running server
+rereads `config.toml` at every `account/read`, but Tinycast keeps what a check found, account or
+provider, beside the models and rate limits it read with it, until the next check; a turn that finds
+nothing to run on leaves Codex signed out and stops the server, as a check does.
 
 MCP is the one thing about that server that is fixed at `exec`: its overrides and its environment
 both are, so `CodexAppServerClient` remembers the list it was launched with and relaunches when the
