@@ -643,21 +643,23 @@ extension ExtensionTests {
             await settle(150)
             check("closing menu does not cancel an async action", manager.isRunning)
             await settle(400)
-            check(
-                "action writes into its own extension",
+            await checkSettled("action writes into its own extension") {
                 storage.localStorageValue(extension: "first", key: "clicked")
                     == .string("left-click")
-                    && storage.localStorageValue(extension: "second", key: "clicked") == nil)
-            check(
-                "action snapshot updates before unloading",
+                    && storage.localStorageValue(extension: "second", key: "clicked") == nil
+            }
+            await checkSettled("action snapshot updates before unloading") {
                 snapshot(firstRef)?.title == "Updated"
-                    && !manager.isRunning && lastRuntime == nil)
+                    && !manager.isRunning && lastRuntime == nil
+            }
         } else {
             check("refresh action exists", false)
         }
 
+        let beforeOpen = boots.count
         controller.menuWillOpen(controller.menu)
         await settle(200)
+        await waitForMenuCondition { boots.count == beforeOpen + 1 && manager.isRunning }
         let beforeReopen = boots.count
         if let index = controller.menu.items.firstIndex(where: { $0.title == "Refresh" }) {
             controller.menuDidClose(controller.menu)
@@ -711,10 +713,9 @@ extension ExtensionTests {
         check("background hosts begin without interactive prompts", hosts.last?.isInteractive == false)
         controller.menuWillOpen(controller.menu)
         await settle(200)
-        check(
-            "opening promotes the existing background host",
-            boots.count == backgroundBoots
-                && hosts.last?.isInteractive == true)
+        await checkSettled("opening promotes the existing background host") {
+            boots.count == backgroundBoots && hosts.last?.isInteractive == true
+        }
         if let index = controller.menu.items.firstIndex(where: { $0.title == "Confirm" }) {
             controller.menuDidClose(controller.menu)
             controller.menu.performActionForItem(at: index)
@@ -796,10 +797,10 @@ extension ExtensionTests {
         manager.run(
             job, command: job.manifest.commands[0], type: .background, context: ["origin": .string("menu")])
         await settle(300)
-        check(
-            "background no-view receives scoped context",
+        await checkSettled("background no-view receives scoped context") {
             storage.localStorageValue(extension: "job", key: "context")
-                == .string("background:menu") && !manager.isRunning && lastRuntime == nil)
+                == .string("background:menu") && !manager.isRunning && lastRuntime == nil
+        }
         check(
             "no-view launch creates no menu snapshot",
             !metadata.metadata(extension: "job", command: "bar").menuBarEnabled)
@@ -815,16 +816,18 @@ extension ExtensionTests {
         await settle(150)
         manager.disable("extension:hanging/bar")
         await settle(150)
-        check("disable cancels host requests", hosts.last?.didCancel == true && lastRuntime == nil)
+        await checkSettled("disable cancels host requests") {
+            hosts.last?.didCancel == true && lastRuntime == nil
+        }
         check(
             "disable removes snapshot and schedule",
             !metadata.metadata(extension: "hanging", command: "bar").menuBarEnabled)
         manager.run(hanging, command: hanging.manifest.commands[0])
         await settle(1250)
-        check(
-            "loading timeout releases runtime",
+        await checkSettled("loading timeout releases runtime") {
             !manager.isRunning && lastRuntime == nil
-                && failures.last?.contains("timed out") == true)
+                && failures.last?.contains("timed out") == true
+        }
         manager.synchronize([])
         check(
             "uninstall prunes every menu and schedule",
