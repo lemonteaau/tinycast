@@ -28,6 +28,11 @@ it.
 Replies render Markdown. Your own messages stay exactly as you typed them. A reply keeps streaming
 even if you close the palette or open another screen, and it is saved when it finishes.
 
+Replies render math too. LaTeX between `\(` and `\)`, or between single `$` signs, sits in the line;
+between `\[` and `\]`, or `$$` signs, it gets a line of its own. An equation that is still arriving
+shows as `…` until it is complete, and copying one copies its LaTeX. Prices like "$5 and $10" stay
+as they are written.
+
 The model name sits at the right of the header. Click it to switch models, or to change the reasoning
 effort on models that support one. A switch applies to your _next_ message; it never interrupts a
 reply already on its way.
@@ -102,7 +107,8 @@ instead.**
 ### Installed AI: Codex, Claude, Grok, OpenCode and Cursor
 
 If you already use the `codex`, `claude`, `grok`, `opencode` or `agent` (Cursor) command-line tools,
-Tinycast can use them with the account you are signed in to. **Tinycast never asks for or stores their keys.**
+Tinycast can use their existing configuration. Codex also works with a configured API provider that
+does not require OpenAI sign-in. **Tinycast never asks for or stores their keys.**
 
 Each one has its own switch, and all five ship off. The pane shows whether each is ready, missing,
 or needs you to sign in. It links to the install page and can copy the sign-in command for you.
