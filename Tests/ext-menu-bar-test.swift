@@ -10,6 +10,13 @@ extension ExtensionTests {
         }
     }
 
+    /// Only extends a caller's settle, which stays so a run that hasn't started can't pass.
+    @MainActor
+    static func checkSettled(_ label: String, _ condition: () -> Bool) async {
+        await waitForMenuCondition(condition)
+        check(label, condition())
+    }
+
     @MainActor
     static func runInstalledMenuBar(_ owner: InstalledExtension, command: ExtensionCommand) async {
         _ = NSApplication.shared
@@ -693,11 +700,11 @@ extension ExtensionTests {
         await settle(100)
         controller.menuDidClose(controller.menu)
         await settle(550)
-        check(
-            "scheduled refresh preserves an explicit background launch's payload",
+        await checkSettled("scheduled refresh preserves an explicit background launch's payload") {
             storage.localStorageValue(extension: "second", key: "launch")
                 == .string("background:kept:payload")
-                && !manager.isRunning)
+                && !manager.isRunning
+        }
 
         manager.run(first, command: first.manifest.commands[0], type: .background)
         let backgroundBoots = boots.count
@@ -712,10 +719,10 @@ extension ExtensionTests {
             controller.menuDidClose(controller.menu)
             controller.menu.performActionForItem(at: index)
             await settle(250)
-            check(
-                "actions can confirm after opening a background refresh",
+            await checkSettled("actions can confirm after opening a background refresh") {
                 storage.localStorageValue(extension: "first", key: "confirmed") == .bool(true)
-                    && !manager.isRunning)
+                    && !manager.isRunning
+            }
         } else {
             check("confirmation action exists", false)
         }
@@ -731,10 +738,10 @@ extension ExtensionTests {
             controller.menuDidClose(controller.menu)
             controller.menu.performActionForItem(at: index)
             await settle(400)
-            check(
-                "clicking immediately after opening runs the fresh action and unloads",
+            await checkSettled("clicking immediately after opening runs the fresh action and unloads") {
                 storage.localStorageValue(extension: "first", key: "confirmed") == .bool(true)
-                    && boots.count == beforeEarlyClick + 1 && !manager.isRunning && lastRuntime == nil)
+                    && boots.count == beforeEarlyClick + 1 && !manager.isRunning && lastRuntime == nil
+            }
         } else {
             check("early confirmation action exists", false)
         }
@@ -743,7 +750,7 @@ extension ExtensionTests {
         manager.synchronize(installed)
         await settle(450)
         check("overdue refresh runs with background launch type", boots.last?.1 == .background)
-        check("background refresh unloads", !manager.isRunning && lastRuntime == nil)
+        await checkSettled("background refresh unloads") { !manager.isRunning && lastRuntime == nil }
         metadata.flush()
         let restored = ExtensionCommandMetadataStore(fileURL: metadataFile)
         check(
@@ -759,16 +766,16 @@ extension ExtensionTests {
         manager.run(first, command: first.manifest.commands[0])
         manager.run(second, command: second.manifest.commands[0])
         await settle(750)
-        check(
-            "queued refreshes finish serially",
-            boots.suffix(2).map(\.0) == ["first", "second"] && !manager.isRunning)
+        await checkSettled("queued refreshes finish serially") {
+            boots.suffix(2).map(\.0) == ["first", "second"] && !manager.isRunning
+        }
         manager.run(empty, command: empty.manifest.commands[0])
         await settle(300)
-        check(
-            "null removes item without forgetting activation",
+        await checkSettled("null removes item without forgetting activation") {
             metadata.metadata(extension: "empty", command: "bar").menuBarEnabled
                 && metadata.metadata(extension: "empty", command: "bar").menuBarSnapshot == nil
-                && !manager.isRunning)
+                && !manager.isRunning
+        }
         let (foreground, _, recorder) = makeRuntime()
         defer { foreground.shutdown() }
         try? await foreground.boot(config: .current(supportDirectory: directory))
@@ -798,10 +805,10 @@ extension ExtensionTests {
             !metadata.metadata(extension: "job", command: "bar").menuBarEnabled)
         manager.run(first, command: first.manifest.commands[0], type: .background)
         await settle(300)
-        check(
-            "foreground keeps rendering during background commands",
+        await checkSettled("foreground keeps rendering during background commands") {
             recorder.trees.count > foregroundRenders + 3
-                && recorder.failures.isEmpty && !manager.isRunning)
+                && recorder.failures.isEmpty && !manager.isRunning
+        }
         foreground.shutdown()
 
         manager.run(hanging, command: hanging.manifest.commands[0])
