@@ -73,10 +73,8 @@ enum AIProviderFactory {
                 throw AIProviderError.unavailable("Add an API key in Settings.")
             }
             return HTTPAIProvider(
-                configuration: AIHTTPConfiguration(
-                    provider: connection.provider, baseURL: baseURL, model: model, effort: effort,
-                    disablesThinking: effort == AIConnection.ReasoningOptions.noEffort
-                        && connection.takesThinkingField),
+                configuration: connection.httpConfiguration(
+                    baseURL: baseURL, model: model, effort: effort),
                 apiKey: key)
         }
     }

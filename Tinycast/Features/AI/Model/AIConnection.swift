@@ -60,7 +60,7 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
     var models: [String]
     /// Models the catalog marked as taking images — only OpenRouter's says, so only it is gated.
     var visionModels: [String]
-    /// OpenRouter's per-model catalog metadata; absent for APIs that do not publish this contract.
+    /// Per-model efforts from the catalog's `reasoning`; absent for APIs that do not publish one.
     var reasoningOptions: [String: ReasoningOptions]?
 
     init(
@@ -83,9 +83,21 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
             && baseURL.trimmingCharacters(in: .whitespacesAndNewlines) != provider.defaultBaseURL
     }
 
-    /// A gateway publishes no catalog, so the only effort it is known to honour is the off switch.
+    /// A gateway with no catalog is known to honour only the off switch.
     func reasoningOptions(for model: String) -> ReasoningOptions? {
         reasoningOptions?[model] ?? (takesThinkingField ? .thinkingSwitch : nil)
+    }
+
+    /// Only an effort the catalog listed is ever named; the synthesized `default` never is.
+    func httpConfiguration(baseURL: URL, model: String, effort: String?) -> AIHTTPConfiguration {
+        if let catalog = reasoningOptions?[model] {
+            return AIHTTPConfiguration(
+                provider: provider, baseURL: baseURL, model: model,
+                effort: catalog.resolvedEffort(effort))
+        }
+        return AIHTTPConfiguration(
+            provider: provider, baseURL: baseURL, model: model,
+            disablesThinking: effort == ReasoningOptions.noEffort && takesThinkingField)
     }
 
     var title: String {

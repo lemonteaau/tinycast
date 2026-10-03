@@ -346,6 +346,10 @@ struct AIConnectionEditorPanel: View {
                 provider: connection.provider, baseURL: baseURL, apiKey: apiKey)
             guard !Task.isCancelled else { return }
             discovery = .loaded(models)
+            // A gateway can start publishing efforts after its models were added.
+            for model in models where connection.models.contains(model.id) {
+                adoptReasoningOptions(model.reasoningOptions, for: model.id)
+            }
         } catch is CancellationError {
             return
         } catch {
@@ -378,13 +382,19 @@ struct AIConnectionEditorPanel: View {
         if acceptsImages == true, !connection.visionModels.contains(model) {
             connection.visionModels.append(model)
         }
-        if connection.provider == .openRouter, let reasoningOptions,
-            !reasoningOptions.efforts.isEmpty
-        {
-            if connection.reasoningOptions == nil { connection.reasoningOptions = [:] }
-            connection.reasoningOptions?[model] = reasoningOptions
-        }
+        if reasoningOptions != nil { adoptReasoningOptions(reasoningOptions, for: model) }
         modelQuery = ""
+    }
+
+    private func adoptReasoningOptions(
+        _ options: AIConnection.ReasoningOptions?, for model: String
+    ) {
+        guard let options, !options.efforts.isEmpty else {
+            connection.reasoningOptions?[model] = nil
+            return
+        }
+        if connection.reasoningOptions == nil { connection.reasoningOptions = [:] }
+        connection.reasoningOptions?[model] = options
     }
 
     private func save() {

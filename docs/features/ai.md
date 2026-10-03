@@ -326,8 +326,17 @@ the only destination Tinycast can offer the switch to honestly. Picking `None` s
 `"thinking": {"type": "disabled"}`, which is how DeepSeek and the endpoints that copied its contract
 answer without reasoning first. A vendor API is never offered the pair and so is never sent a field it
 does not define — which matters precisely because the preset alone says nothing about the destination
-when every base URL is editable. Only `None` is ever written, so every other body is the one it always
-was, and the choice rides in `AIModelSelection.effort` like every other route's.
+when every base URL is editable. Of the pair only `None` is ever written, so every other body is the one
+it always was, and the choice rides in `AIModelSelection.effort` like every other route's.
+
+A catalog is a `/models` entry whose `reasoning` lists `supported_efforts`, with an optional
+`default_effort` — OpenRouter's contract, which any OpenAI-shaped endpoint, a gateway included, may
+publish — or the same pair flattened to `reasoning_supported_efforts` and `reasoning_default_effort`,
+as some gateways spell it. The editor keeps it per model for every provider, and refreshes the models
+already added each time discovery loads, so a gateway that starts publishing efforts is picked up by
+reopening and saving its connection. `AIConnection.httpConfiguration` names only a catalogued effort — one the catalog no
+longer lists resolves to its `default_effort` — as OpenRouter's `reasoning.effort` there and OpenAI's
+top-level `reasoning_effort` everywhere else.
 
 ## Provider interface
 
@@ -373,10 +382,11 @@ nothing at all while the feature is off. The palette search field becomes the si
 The footer pill and Return are one action, `activate`: Send, or Stop while a response streams — an
 empty composer sends nothing, so the pill never needs a disabled state. The header's trailing model
 switcher opens by click or ⌘P, uses the same in-window menu control as Clipboard's type filter and
-changes the chat route for the next message. For installed routes and OpenRouter models whose catalog
+changes the chat route for the next message. For installed routes and API models whose catalog
 reports the capability, it also shows the supported reasoning efforts and changes the chat effort for
-the next message. Other API routes keep their provider default because their model catalogs expose no
-portable effort contract. Neither change interrupts a response already streaming; stopping one is
+the next message; a gateway with no catalog offers `Default` and `None`. Other API routes keep their
+provider default because their model catalogs publish no efforts. Neither change interrupts a response
+already streaming; stopping one is
 the pill's job, so the header never has to fit a third control beside the switcher.
 
 The second footer control is the palette's normal Actions (`⌘K`) menu. It owns Continue in AI Chat

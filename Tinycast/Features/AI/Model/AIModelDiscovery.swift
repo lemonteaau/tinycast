@@ -88,11 +88,7 @@ enum AIModelDiscovery {
                     Model(
                         id: $0.id, name: $0.name ?? $0.displayName ?? $0.id,
                         inputModalities: $0.architecture?.inputModalities,
-                        reasoningOptions: $0.reasoning.map {
-                            AIConnection.ReasoningOptions(
-                                efforts: $0.supportedEfforts ?? [],
-                                defaultEffort: $0.defaultEffort)
-                        })
+                        reasoningOptions: $0.reasoningOptions)
                 })
         case .gemini:
             let response = try JSONDecoder().decode(GeminiResponse.self, from: data)
@@ -214,10 +210,26 @@ enum AIModelDiscovery {
             let displayName: String?
             let architecture: Architecture?
             let reasoning: Reasoning?
+            let reasoningSupportedEfforts: [String]?
+            let reasoningDefaultEffort: String?
 
             enum CodingKeys: String, CodingKey {
                 case id, name, architecture, reasoning
                 case displayName = "display_name"
+                case reasoningSupportedEfforts = "reasoning_supported_efforts"
+                case reasoningDefaultEffort = "reasoning_default_effort"
+            }
+
+            /// OpenRouter nests the efforts under `reasoning`; some gateways flatten them instead.
+            var reasoningOptions: AIConnection.ReasoningOptions? {
+                if let reasoning {
+                    return .init(
+                        efforts: reasoning.supportedEfforts ?? [],
+                        defaultEffort: reasoning.defaultEffort)
+                }
+                return reasoningSupportedEfforts.map {
+                    .init(efforts: $0, defaultEffort: reasoningDefaultEffort)
+                }
             }
         }
 

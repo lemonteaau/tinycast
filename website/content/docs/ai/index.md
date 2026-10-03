@@ -150,7 +150,9 @@ any **OpenAI Compatible** endpoint, including a local one like Ollama.
   search that list as you type. If a gateway can't list its models, type the model ID yourself.
 
 For gateways that follow DeepSeek's API, the reasoning effort menu includes **None**, which turns
-thinking off.
+thinking off. If a provider's model list publishes reasoning efforts for a model, as OpenRouter's
+does, the menu offers those instead and Tinycast sends the one you pick. When a gateway starts
+publishing them for a model you already added, open its connection and save it again.
 
 ## Web search
 
