@@ -42,6 +42,11 @@ Fork release tags and download filenames append `-fork.N`, where N is the Action
 `v0.11.3-fork.2` means official version `0.11.3`, fork build 2. The bundle build number matches N,
 allowing the in-app updater to distinguish successive fork builds even when upstream does not bump
 its version. Each release identifies the upstream commit and exact fork source commit.
+`Scripts/fork-release-notes.sh` writes the notes from Git history since the previous published
+release: the fork's own commits with their full messages (trailers dropped), then the upstream
+commits merged in, linked to their upstream pull requests and capped at 40. Both sit above
+`<!-- tinycast:install -->`, so the in-app update window shows them; the build and install details
+go below it. `Tests/fork-release-notes-test.sh` covers the ranges, escaping and links.
 Releases contain an Apple silicon (arm64) DMG, updater-compatible ZIP and SHA-256 checksums.
 macOS 26 or newer is required. Intel builds are not published by this personal workflow.
 

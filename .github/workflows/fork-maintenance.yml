@@ -87,6 +87,7 @@ jobs:
           if [ -n "$TAG" ]; then
             RELEASED=$(git rev-parse "$TAG^{commit}" 2>/dev/null || true)
           fi
+          echo "PREVIOUS=$TAG" >> "$GITHUB_ENV"
           if [[ "$RELEASED" == "$(git rev-parse HEAD)" && "$TAG" == "v$UPSTREAM_VERSION-fork."* ]]; then
             echo 'needed=false' >> "$GITHUB_OUTPUT"
             echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
@@ -95,6 +96,13 @@ jobs:
             echo 'needed=true' >> "$GITHUB_OUTPUT"
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Compose release notes from commits
+        if: steps.release.outputs.needed == 'true'
+        env:
+          UPSTREAM: ${{ steps.sync.outputs.upstream }}
+          REPO: ${{ github.repository }}
+        run: ./Scripts/fork-release-notes.sh "$RUNNER_TEMP/notes.md"
 
       - name: Select Xcode 26 and install lint tools
         if: steps.release.outputs.needed == 'true'
@@ -108,6 +116,7 @@ jobs:
         if: steps.release.outputs.needed == 'true'
         run: |
           bash Tests/fork-sync-test.sh
+          bash Tests/fork-release-notes-test.sh
           ./Scripts/run-tests.sh
           ./Scripts/lint.sh
           actionlint
@@ -167,26 +176,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           BASE: ${{ steps.sync.outputs.base }}
-          UPSTREAM: ${{ steps.sync.outputs.upstream }}
         run: |
           REMOTE=$(git ls-remote origin refs/heads/main | cut -f1)
           test "$REMOTE" = "$BASE" || { echo 'main changed during build; rerun safely.' >&2; exit 1; }
           git push origin HEAD:main
           TAG="v$VERSION"
-          {
-            echo "Personal Tinycast fork build $VERSION, based on upstream $UPSTREAM_VERSION."
-            echo
-            echo 'Supports currency shorthand such as 610 aud cny.'
-            echo "Upstream: https://github.com/abue-ammar/tinycast/commit/$UPSTREAM"
-            echo "Source: https://github.com/$GH_REPO/commit/$(git rev-parse HEAD)"
-            echo
-            echo 'Tests, lint, Debug build and signed arm64 Release build passed.'
-            echo '<!-- tinycast:install -->'
-            echo 'macOS 26+, Apple silicon. Independently signed personal fork; not Apple-notarized.'
-            echo 'First install replaces Tinycast.app and retains its settings. Grant Accessibility again if prompted.'
-            echo 'Subsequent in-app updates come from this fork and use the same signing identity.'
-            echo 'See docs/fork.md for installation, signing and sync details.'
-          } > "$RUNNER_TEMP/notes.md"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --target "$(git rev-parse HEAD)" --draft \
               --title "Tinycast $VERSION" --notes-file "$RUNNER_TEMP/notes.md"
