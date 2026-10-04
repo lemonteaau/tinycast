@@ -23,17 +23,29 @@ the final Homebrew job write access to `lemonteaau/homebrew-tinycast` only; it g
 repositories. It is stored as `HOMEBREW_TAP_DEPLOY_KEY` in this repository's Actions secrets. Tap access
 is checked before building. The build/signing job never receives the tap key.
 
-A conflict outside that directory aborts the merge. Tests, lint, a Debug build and a signed Release
-build must all pass before a merge is pushed to `main`. The final push also verifies that `main` has
-not moved during the build. An unsuccessful run leaves the last published release available.
+Two conflicts resolve themselves because the right answer is mechanical. `Tinycast.xcodeproj` is
+regenerated with XcodeGen from the merged `project.yml`. `Scripts/run-tests.sh` merges as a union,
+since both sides append harnesses to one list; if that leaves one harness registered twice, the
+merge aborts instead. Any other conflict aborts the merge and lists its files in the run summary:
+merge upstream by hand and push to `main`, and that push releases it. Fork-only changes in their
+own files, rather than edits beside upstream's, keep this rare.
+
+Tests, lint, a Debug build and a signed Release build must all pass before a merge is pushed to
+`main`. `Scripts/fork-test.sh` runs the suite and retries each failed harness once on its own: the
+runner's few cores starve timing-sensitive harnesses while the others compile. A retried harness
+leaves a "Flaky harness" warning on the run, and one that fails alone too fails the run. The final
+push verifies that `main` has not moved during the build; if it has, the run ends without releasing
+and the run queued by that push releases instead. An unsuccessful run leaves the last published
+release available.
 If publishing fails after the push, rerun the failed workflow; an unpublished commit is built again.
 Draft releases are uploaded completely before being published. An already released commit skips the
 build only when its official base version still matches upstream; Homebrew synchronization still runs
 to repair an interrupted publication.
 
 The sync and release happen in the same workflow: a push using `GITHUB_TOKEN` does not need to trigger
-another workflow. `Tests/fork-sync-test.sh` exercises successful merges, workflow isolation,
-idempotence and conflict rollback in temporary Git repositories.
+another workflow. `Tests/fork-sync-test.sh` exercises successful merges, harness-list unions,
+project regeneration, workflow isolation, idempotence and conflict rollback in temporary Git
+repositories.
 
 ## Builds and updates
 

@@ -48,6 +48,7 @@ jobs:
       contents: write
     outputs:
       version: ${{ steps.release.outputs.version }}
+      superseded: ${{ steps.publish.outputs.superseded }}
     env:
       GH_REPO: ${{ github.repository }}
     steps:
@@ -61,6 +62,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          command -v xcodegen >/dev/null || brew install xcodegen
           bash Scripts/fork-sync.sh
 
       - name: Match the upstream stable version
@@ -117,7 +119,7 @@ jobs:
         run: |
           bash Tests/fork-sync-test.sh
           bash Tests/fork-release-notes-test.sh
-          ./Scripts/run-tests.sh
+          ./Scripts/fork-test.sh
           ./Scripts/lint.sh
           actionlint
           if rg -l 'import (AppKit|SwiftUI|Cocoa)' Tinycast/Features/*/Model/; then
@@ -172,13 +174,18 @@ jobs:
           (cd dist && shasum -a 256 ./*.zip ./*.dmg > SHA256SUMS.txt)
 
       - name: Push tested merge and publish release
+        id: publish
         if: steps.release.outputs.needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           BASE: ${{ steps.sync.outputs.base }}
         run: |
           REMOTE=$(git ls-remote origin refs/heads/main | cut -f1)
-          test "$REMOTE" = "$BASE" || { echo 'main changed during build; rerun safely.' >&2; exit 1; }
+          if [ "$REMOTE" != "$BASE" ]; then
+            echo 'superseded=true' >> "$GITHUB_OUTPUT"
+            echo '::notice::main moved during the build; the run queued by that push releases it.'
+            exit 0
+          fi
           git push origin HEAD:main
           TAG="v$VERSION"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
@@ -201,6 +208,7 @@ jobs:
   homebrew:
     name: Publish and verify Homebrew cask
     needs: update
+    if: needs.update.outputs.superseded != 'true'
     permissions:
       contents: write
     uses: lemonteaau/homebrew-tinycast/.github/workflows/update-cask.yml@67dd997052bd5578bf868dfbacfd412b5a0fb217
