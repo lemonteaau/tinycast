@@ -55,6 +55,19 @@ final class NoteTextView: NSTextView, InjectableTextView {
         performTextFinderAction(item)
     }
 
+    /// The frame never gets shorter than the clip view, so only the layout knows the text's height.
+    func textHeight() -> CGFloat {
+        guard let textLayoutManager else { return frame.height }
+        var bottom: CGFloat = 0
+        textLayoutManager.enumerateTextLayoutFragments(
+            from: textLayoutManager.documentRange.endLocation, options: [.reverse, .ensuresLayout]
+        ) { fragment in
+            bottom = fragment.layoutFragmentFrame.maxY
+            return false
+        }
+        return bottom + textContainerInset.height * 2
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard textStorage?.length == 0 else { return }
@@ -101,9 +114,24 @@ final class NoteTextView: NSTextView, InjectableTextView {
         super.insertBacktab(sender)
     }
 
-    /// A formatting chord is always ours while rendering, even when it has nothing to do.
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard rendersMarkdown, window?.firstResponder === self, let action = Self.chord(for: event) else {
+        guard window?.firstResponder === self else {
+            return super.performKeyEquivalent(with: event)
+        }
+        let modifiers = event.modifierFlags.intersection([.command, .shift, .option, .control])
+        if event.charactersIgnoringModifiers?.lowercased() == "z",
+            modifiers == .command || modifiers == [.command, .shift]
+        {
+            guard !event.isARepeat else { return true }
+            breakUndoCoalescing()
+            if modifiers == .command {
+                editorUndoManager?.undo()
+            } else {
+                editorUndoManager?.redo()
+            }
+            return true
+        }
+        guard rendersMarkdown, let action = Self.chord(for: event) else {
             return super.performKeyEquivalent(with: event)
         }
         if !event.isARepeat { perform(action) }

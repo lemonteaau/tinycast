@@ -163,15 +163,18 @@ panel, the shortcut-recorder callout and the Notes switcher, and `menuRow` is de
 
 The opt-in Dictation capsule adds `dictationPanel 144×44`, with 2pt waveform bars separated by 3pt.
 
-Notes adds `noteWindow 520×420` (opening size on a first run only), `noteWindowMinimum 320×220`,
+Notes adds `noteWindow 440×180` (opening size on a first run, and the floor), `noteWindowMaxHeight 860`,
 `noteTitlebar 44`, `noteTitleInset 120`, `noteEditorInset 16`, `noteSearchHeight 34`,
 `noteFooterHeight 28`, `noteGlyph 16`, `noteEmptyGlyph 28`, and `noteHeadingMenu 220×159`.
 
 AI Chat adds `aiChatWindow 960×660` (opening size), `aiChatWindowMinimum 680×440`, a sidebar of
 `aiChatSidebarMinimum 240`–`aiChatSidebarMaximum 340`, `aiChatDetailMinimum 440`,
-`aiChatReadingWidth 760` for the transcript and composer column, `aiChatComposerMaxHeight 180`, and
-`chatContextGauge 14` for the composer's context ring, and `chatContextCard 300` for the card it
-raises on hover.
+`aiChatReadingWidth 760` for the transcript and composer column, a composer of at most
+`aiChatComposerMaxLines 15` lines or `aiChatComposerHeightFraction 0.30` of the pane,
+`aiChatComposerControl 28` for every control on its row and `aiChatComposerGlyph 16` for their glyph
+slot, `chatContextGauge 14` for the composer's context ring, and `chatContextCard 300` for the card it
+raises on hover. The row's glyphs are `Typography.composerSymbol`; Send's arrow is `composerSend` and
+Stop's square `composerStop`.
 
 The AI Providers panel adds `aiProvidersPanel 840×520` (the height is its two columns', stated so
 that selecting a longer provider never resizes the panel), `aiProvidersList 262`, `aiUsageBar 110`
@@ -217,9 +220,11 @@ shipped. Light is the same stop with the ink inverted, and is the only column op
 | `cardStroke`      | white 0.10     | black 0.10     | settings/calc card border + inset dividers       |
 | `noteText`        | white 0.90     | black 0.85     | Notes body text                                  |
 | `dropGuide`       | white 0.35     | black 0.35     | the palette's drop guides while dragging         |
+| `composerSend`    | white 0.92     | black 0.92     | AI Chat's Send disc                              |
 
 `panelScrim` is the ramp's inverse — it darkens the dark surface and lightens the light one — so it
-is an `adaptive` pair, not a `ramp`.
+is an `adaptive` pair, not a `ramp`. So is `composerSendInk`, black 0.85 on the dark disc and white
+on the light one.
 `brand`, `primaryAction`, `destructive`, `success` and `dropGuideArmed` are fixed hues and adapt on
 their own.
 
@@ -264,8 +269,8 @@ the window. The three actions cannot do that, so they live in an `NSTitlebarAcce
 at `.trailing` — `NoteTitlebarActions`, the launcher's footer capsule (`BarButton` in a
 `frosted(in: Capsule())`) with glyphs in place of pills. Its 44-point height is what sizes the band.
 
-`NotesWindowController` preserves the user-owned size and AppKit autosaves the frame under
-`"Notes Window"`; only a title-bar double-click computes a top-right target. The window shows exactly
+`NotesWindowController` fits the height to the editor on every edit and AppKit autosaves the frame
+under `"Notes Window"`; only a title-bar double-click computes a top-right target. The window shows exactly
 one surface at a time — editor, switcher, or the "No Notes" empty state — and the character count is
 part of the editor surface, so it never appears without a note.
 
@@ -334,8 +339,10 @@ AI Chat is a titled window built the way Settings is, not a palette sibling like
 `NSSplitViewController` whose sidebar item takes the system sidebar material, a unified toolbar with
 an inline title, and native `List`, `Menu` and context menus. Nothing about it scales with Interface
 Size. The composer is untinted Liquid Glass at `Radius.dialog`, stacked under the transcript so nothing
-scrolls behind it, with `.glass` capsules for its model and reasoning menus, and its glass on a
-background layer rather than the box.
+scrolls behind it, with its controls on one row inside the glass, and its glass on a background layer
+rather than the box. The row's controls are stock `Menu`s and buttons wearing one face: bare at rest,
+a `controlSurface` fill at `Radius.barControl` under the pointer. Send is a solid disc in
+`Colors.composerSend` with a `composerSendInk` arrow, the row's one strong mark.
 The title bar keeps the system's own toolbar band, as any document window's does. The context card
 the gauge raises on hover is glass over a solid `windowBackgroundColor`, because it rises over
 transcript text, and sits in the transcript's own frame at its bottom edge, so no window size can
@@ -642,6 +649,12 @@ inline enumerated arguments remain `DialogChip`s. Two things follow from the enu
   keeps its caret.
 - **An accessory can refuse its own primary action.** An invalid draft leaves the dialog up on ↵ and
   on a click alike, which is what a greyed-out button would say if `DialogAction` could carry one.
+
+The first text field takes focus from `DialogController.windowDidBecomeKey`, never from the view.
+When the panel turns key AppKit picks its own first responder — the Cancel button with Keyboard
+navigation on — and over another app that happens only after `show` returns, so focus a SwiftUI view
+asks for loses to it. The panel can also turn key inside `makeKeyAndOrderFront`, before SwiftUI has
+built the field, so `DialogPanel.focusFirstTextField` lays the content out first.
 
 ## Settings
 

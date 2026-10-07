@@ -125,6 +125,9 @@ enum SettingsSearchCatalog {
             .generalGeneral, "Show in menu bar",
             keywords: ["menubar", "status item", "icon", "hide"]),
         .init(
+            .generalGeneral, "Automatically check for updates",
+            keywords: ["software", "update", "automatic", "disable", "popup"]),
+        .init(
             .generalGeneral, "Pop to Root Search",
             keywords: ["reset", "timeout", "back"]),
         .init(
@@ -530,6 +533,9 @@ enum SettingsSearchCatalog {
         .init(
             .calendarJoining, "Auto Join Meetings",
             keywords: ["automatic", "start"]),
+        .init(
+            .calendarJoining, "Only join known meeting services",
+            keywords: ["zoom", "meet", "teams", "links", "placeholder", "skip"]),
         .init(
             .calendarJoining, "Confirm before joining",
             keywords: ["ask", "prompt"]),
