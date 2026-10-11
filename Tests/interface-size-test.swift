@@ -26,7 +26,6 @@ struct InterfaceSizeTests {
         fontsKeepTheirFace()
         everySizeRounds()
         sizesGrow()
-        readableContentKeepsTheFrame()
         derivationsHold()
         theEnumIsWellFormed()
 
@@ -248,20 +247,6 @@ struct InterfaceSizeTests {
                 "the panel is wider at \(larger.rawValue)")
             expect(smaller.scale < larger.scale, "\(larger.rawValue) scales further")
         }
-    }
-
-    static func readableContentKeepsTheFrame() {
-        let large = InterfaceSize.large.metrics
-        let larger = InterfaceSize.larger.metrics
-        expect(large.size.panelWidth, 825, "Large keeps its existing panel width")
-        expect(large.size.panelHeight, 523, "Large keeps its existing panel height")
-        expect(large.typography.searchFieldSize, 24, "Large search text is easier to read")
-        expect(large.size.rowIcon, 29, "Large launcher icons are easier to see")
-        expect(large.size.resultRowIcon, 31, "Large result icons are easier to see")
-        expect(larger.typography.searchFieldSize > large.typography.searchFieldSize,
-               "Larger text still grows beyond Large")
-        expect(larger.size.rowIcon > large.size.rowIcon,
-               "Larger icons still grow beyond Large")
     }
 
     /// A derived token composes scaled parts; scaling the result would disagree by a point.

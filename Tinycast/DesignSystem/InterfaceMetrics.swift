@@ -2,10 +2,16 @@ import SwiftUI
 
 /// `Theme`'s palette geometry at the user's Interface Size; `.standard` is `Theme` verbatim.
 struct InterfaceMetrics: Equatable, Sendable {
-    static let standard = InterfaceMetrics(scale: 1, contentScale: 1)
+    static let standard = InterfaceMetrics(scale: 1)
 
     let scale: CGFloat
     let contentScale: CGFloat
+
+    /// Upstream names one scale, so its call sites keep compiling here and scale content with it.
+    init(scale: CGFloat, contentScale: CGFloat? = nil) {
+        self.scale = scale
+        self.contentScale = contentScale ?? scale
+    }
 
     var spacing: Spacing { Spacing(scale: scale) }
     var radius: Radius { Radius(scale: scale) }

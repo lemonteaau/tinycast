@@ -304,6 +304,23 @@ run dictionary-session-test Tinycast/Features/Dictionary/Model/DictionaryEntry.s
 run dictionary-history-test Tinycast/Features/Dictionary/Model/DictionaryHistoryEntry.swift \
                             Tinycast/Features/Dictionary/Service/DictionaryHistoryStore.swift \
                             Tinycast/Platform/AppPaths.swift
+run fork-calculator-test   Tinycast/Features/Calculator/Model/*.swift
+run fork-updates-test      Tinycast/Features/Updates/Model/*.swift
+run fork-palette-test      Tinycast/Palette/PaletteMode.swift \
+                           Tinycast/Palette/PaletteEscapeAction.swift \
+                           Tinycast/Palette/PaletteFilterAction.swift \
+                           Tinycast/Palette/PaletteTabAction.swift \
+                           Tinycast/Features/Settings/EscapeKeyBehavior.swift \
+                           Tinycast/Features/Quicklinks/Model/Quicklink.swift \
+                           Tinycast/Features/Quicklinks/Model/QuicklinkDestination.swift \
+                           Tinycast/Features/CustomCommands/Model/CustomCommand.swift
+run fork-interface-test    Tinycast/Platform/Appearance.swift \
+                           Tinycast/DesignSystem/Theme.swift \
+                           Tinycast/DesignSystem/InterfaceMetrics.swift \
+                           Tinycast/Features/Settings/InterfaceSize.swift
+run fork-ai-test           Tinycast/Features/Settings/AppSettingsKey.swift \
+                           Tinycast/Features/AI/Model/*.swift \
+                           Tinycast/Features/AI/Settings/AISettingsStore.swift
 run dictation-test         Tinycast/Features/Dictation/Model/DictationModel.swift Tinycast/Features/Dictation/Model/DictationIdleRelease.swift Tinycast/Features/Dictation/Model/DictationTextFormatter.swift
 run dictation-field-test   Tinycast/Features/Dictation/Model/DictationModel.swift \
                            Tinycast/Features/Dictation/Model/DictationMode.swift \

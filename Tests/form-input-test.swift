@@ -105,8 +105,8 @@ struct FormInputTests {
     }
 
     static func testCapAlignment() {
-        for (scale, contentScale): (CGFloat, CGFloat) in [(1, 1), (1.1, 1.2), (1.2, 1.3)] {
-            let metrics = InterfaceMetrics(scale: scale, contentScale: contentScale)
+        for scale: CGFloat in [1, 1.1, 1.2] {
+            let metrics = InterfaceMetrics(scale: scale)
             let draft = Draft()
             draft.name = "H"
             let height = metrics.size.dialogButtonHeight

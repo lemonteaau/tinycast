@@ -15,8 +15,7 @@ The mechanical bar, in one place so it cannot drift. All five pass before a chan
 | A clean build | `xcodebuild … -configuration Debug CODE_SIGNING_ALLOWED=NO`, zero **new** warnings |
 | Docs still true | any doc your change made wrong, fixed in the same commit |
 
-This fork runs these checks in `fork-maintenance.yml` before publishing; also run them locally.
-Upstream CodeRabbit reviews each PR, but it is a reviewer,
+There is no CI: every item is on you, run locally. CodeRabbit reviews each PR, but it is a reviewer,
 not a gate. Each is expanded below; the manual sweep at the end of this file is the sixth, judged by
 what you touched.
 
@@ -66,12 +65,6 @@ harnesses are not still running after everything else has finished.
 
 The script is the **only** place the harness set is written down. Nothing runs it for you, so run it
 before you open a PR. Adding a harness means adding one `run` line.
-
-`dictionary-session-test` waits for published lookup results with a bounded deadline. Query bursts
-are submitted together so scheduler delays cannot turn a prefix into a settled query; cancellation
-is checked while a separate session completes against the same history store.
-The extension menu harness likewise waits for queued menus to open and closed sessions to unload,
-with a deadline, rather than assuming those transitions finish within a fixed sleep.
 
 Each harness compiles the **shipped sources** it guards rather than a copy of them, which is what makes
 the pure-layer boundary real: a harness that stops *compiling* means AppKit or SwiftUI has leaked into a
@@ -137,8 +130,6 @@ If a change touches anything in the right column, the harness on the left is man
 | `dictation-worker-test` | Dictation's framed channel, worker reuse/switching, removal, cancellation and broken pipes with a fixture helper |
 | `fallback-test` | `Launcher/Model/Fallback.swift`, plus the `CommandID` and `Quicklink` ids it is built from |
 | `dictionary-test` | `Dictionary/Model/DictionaryEntry.swift`, `DictionaryMarkup.swift` — a real XHTML record and the plain-text fallback, read into page blocks |
-| `dictionary-session-test` | `DictionarySession.swift` — rapid prefixes coalesce, no-result terms are saved, and reset cancels a pending lookup |
-| `dictionary-history-test` | Local lookup-history persistence, case-insensitive deduplication, search, cap, removal and clearing |
 | `callout-test` | `DesignSystem/Theme.swift`, `HotKeys/UI/CalloutPlacement.swift` |
 | `system-action-test` | `SystemActions/Model/SystemAction.swift` |
 | `microphone-mute-test` | Native input mute, delayed confirmation, device switches and failures; injected CoreAudio calls only |
@@ -470,16 +461,6 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   or double-pressing it fast never pastes one entry twice
 - A text, link, image and file row each drag into another app; a click still selects, a double
   click still pastes, and a right click still opens ⌘K
-
-### Dictionary
-
-- The dictionary hotkey opens on recent lookups; Enter retries one and ⌘↵ opens Dictionary.app
-- Typing `h`, `hy`, `hyp`, `hype` quickly records only `hype` after the query settles
-- Escape from a directly summoned, empty dictionary screen returns to the launcher
-- A completed lookup appears in Dictionary History, including a term with no definition
-- Repeating a term with different letter case moves its single row to the top
-- Search filters history; Enter reopens Tinycast's definition and ⌘↵ opens Dictionary.app
-- ⌃X deletes one row; ⌃⇧X asks before clearing every lookup
 
 ### Launcher and icons
 

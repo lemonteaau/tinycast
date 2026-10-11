@@ -102,15 +102,13 @@ every screen but two: the clipboard lands past its pins
 | `.snippets`          | `SnippetsScreen`          | `SnippetsList` + preview (see [snippets.md](snippets.md#search-snippets))        |
 | `.snippetEditor`     | `SnippetEditorScreen`     | `SnippetEditorView` (see [snippets.md](snippets.md#launcher-editor)) |
 | `.dictionary`        | `DictionaryScreen`        | `DictionaryEntryView` (see [dictionary.md](dictionary.md))                       |
-| `.dictionaryHistory` | `DictionaryHistoryScreen` | `DictionaryHistoryList` (see [dictionary.md](dictionary.md#history))             |
 | `.extensionCommand`  | `ExtensionCommandScreen`  | `ExtensionCommandView` (see [extensions.md](extensions.md))                      |
 
 **Tab rings the three surfaces a reader opens directly — launcher → AI chat → clipboard → launcher**
 — unless the screen claims it through `tab(at:backwards:)` (native editors and extension forms walk
 their own fields), or the selected row declares arguments, in which case it walks those fields first (see
-below); Dictionary History and every other mode stay off the ring, and are reached by a command or a
-global hotkey, with Uninstall only from a launcher app's Actions menu, scoped to that app. Chat is
-skipped whole when
+below); every other mode stays off the ring, and is reached by a command or a global hotkey, with
+Uninstall only from a launcher app's Actions menu, scoped to that app. Chat is skipped whole when
 `aiEnabled` is off, which leaves the launcher ↔ clipboard flip the ring replaced.
 
 ### Navigation
@@ -122,11 +120,7 @@ behind it. Every mode command and every global hotkey funnels through `showPalet
 so typing "Clipboard History" at the root and pressing ↵ leaves a step back to the search that found
 it, while the Clipboard History hotkey does not. **The launcher is the exception, because it is the
 root** — ⌘Space over an open clipboard opens the root search with nothing behind it, rather than
-stacking the launcher over the screen it replaced. The Dictionary screen is dismissed directly by
-⌘Space, so closing a definition takes one press; that close resets the hidden palette to its root, so
-the next press always opens the launcher, even inside Pop to Root Search's delay. Escape from a directly
-summoned dictionary screen returns to the launcher; when opened from a launcher result it restores that
-result. Nothing per-feature encodes the launcher navigation rule.
+stacking the launcher over the screen it replaced. Nothing per-feature encodes this.
 
 `PaletteState` holds the screens below `mode` as `[PaletteFrame]` — mode, query and selection, enough
 that returning looks like never having left — and offers four motions over it:
