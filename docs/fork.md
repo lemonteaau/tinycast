@@ -2,8 +2,9 @@
 
 This is an independently maintained personal fork of
 [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast), under the original AGPL-3.0 license.
-It adds a connector-free currency conversion, a dictionary lookup history, catalogued reasoning
-efforts for AI gateways and a larger content scale, and publishes its own signed builds.
+It adds a connector-free currency conversion, a yuan default for bare amounts, a dictionary lookup
+history, catalogued reasoning efforts for AI gateways and a larger content scale, and publishes its
+own signed builds.
 
 **Everything the fork changes is documented in this file.** The rest of `docs/`, `website/` and
 `AGENTS.md` are upstream's text, kept identical to upstream so the daily sync cannot conflict in
@@ -20,6 +21,15 @@ a mixed `10 usd kg` stays a search. Explicit `to`, `in` and `->` retain their me
 [calculator.md](features/calculator.md)'s evaluation order this belongs to step 7, currency
 conversion. `fork-calculator-test` covers the shorthand, expressions, signs, missing rates and
 ambiguous input.
+
+### A bare amount answers in yuan
+
+Upstream converts a lone amount such as `100 aud` into the Mac's region currency, falling back to
+USD (EUR for a dollar amount) when the amount is already in it. This fork prefers CNY ahead of the
+region: `100 aud` and `1 usd` both answer in CNY, and `100 cny` answers in the region currency, or
+upstream's fallback when the region is itself CNY. `PreferredCurrency.code` holds the choice;
+`CalcEngine.evaluate` takes it as a defaulted `preferred`, so upstream's calc-test keeps its region
+rules. Explicit conversions and expressions are unchanged. `fork-calculator-test` covers it.
 
 ### Dictionary history
 

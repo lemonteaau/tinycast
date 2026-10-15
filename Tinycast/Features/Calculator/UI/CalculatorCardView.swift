@@ -27,7 +27,8 @@ enum CalcMemo {
             return cache.result
         }
         let result = CalcEngine.evaluate(
-            query, now: Date(), calendar: .current, rates: rates, region: region, format: format)
+            query, now: Date(), calendar: .current, rates: rates, region: region,
+            preferred: PreferredCurrency.code, format: format)
         cache = Cache(query: query, stamp: rates?.fetchedAt, region: region, format: format, result: result)
         return result
     }

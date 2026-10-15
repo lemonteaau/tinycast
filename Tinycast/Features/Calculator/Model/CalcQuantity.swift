@@ -3,7 +3,7 @@ import Foundation
 enum CalcQuantity {
     static func evaluate(
         _ tokens: [CalcToken], query: String, rates: CurrencyRates?, region: String? = nil,
-        preserveStandaloneUnit: Bool = false
+        preferred: String? = nil, preserveStandaloneUnit: Bool = false
     ) -> CalcResult? {
         if tokens.count == 1, case .intLiteral = tokens[0] { return nil }
         let split = splitConversion(tokens)
@@ -96,7 +96,8 @@ enum CalcQuantity {
             }
             let expression = "\(CalcFormatter.display(value.amount)) \(definition.code)"
             // A bare amount names no target, so the Mac's own currency becomes one once it's typed.
-            guard !preserveStandaloneUnit, let target = regionTarget(region, from: definition),
+            guard !preserveStandaloneUnit,
+                let target = conversionTarget(preferred, region: region, from: definition),
                 let output = rates?.convert(value.amount, from: definition.code, to: target.code)
             else {
                 return currencyResult(value.amount, definition: definition, expression: expression)
@@ -107,7 +108,7 @@ enum CalcQuantity {
     }
 
     /// Converting is the only reason to type a lone amount, so it pairs with the region's own.
-    private static func regionTarget(_ region: String?, from: CurrencyDef) -> CurrencyDef? {
+    static func regionTarget(_ region: String?, from: CurrencyDef) -> CurrencyDef? {
         guard let regional = region.flatMap({ CalcCurrency.byName[$0.lowercased()] })
         else { return nil }
         guard regional.code == from.code else { return regional }

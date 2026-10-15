@@ -53,7 +53,7 @@ enum CalcEngine {
     /// Every environment fact is injected; the answer is canonical, for `format` to localize.
     static func evaluate(
         _ raw: String, now: Date, calendar: Calendar, rates: CurrencyRates? = nil,
-        region: String? = nil, format: CalcNumberFormat = .english
+        region: String? = nil, preferred: String? = nil, format: CalcNumberFormat = .english
     ) -> CalcResult? {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 256, let query = format.canonical(trimmed) else {
@@ -75,7 +75,8 @@ enum CalcEngine {
         guard let tokens = CalcTokenizer.tokenize(query), !tokens.isEmpty else { return nil }
 
         if let partial = partialResult(
-            tokens, query: query, now: now, calendar: calendar, rates: rates, region: region)
+            tokens, query: query, now: now, calendar: calendar, rates: rates, region: region,
+            preferred: preferred)
         {
             return partial
         }
@@ -101,7 +102,9 @@ enum CalcEngine {
         if let base = baseConversion(tokens, query: query) { return base }
 
         // Typed arithmetic first, so aliases such as `pounds` keep winning in multi-term exprs.
-        if let quantity = CalcQuantity.evaluate(tokens, query: query, rates: rates, region: region) {
+        if let quantity = CalcQuantity.evaluate(
+            tokens, query: query, rates: rates, region: region, preferred: preferred)
+        {
             return quantity
         }
 
@@ -176,7 +179,7 @@ enum CalcEngine {
     /// A trailing operator keeps the last complete prefix on the card while the user still types.
     private static func partialResult(
         _ tokens: [CalcToken], query: String, now: Date, calendar: Calendar,
-        rates: CurrencyRates?, region: String?
+        rates: CurrencyRates?, region: String?, preferred: String?
     ) -> CalcResult? {
         guard let trailing = tokens.last, let operatorText = partialOperatorText(trailing) else {
             return nil
@@ -191,7 +194,7 @@ enum CalcEngine {
 
         if let quantity = CalcQuantity.evaluate(
             prefixTokens, query: tokenQuery(prefixTokens), rates: rates, region: region,
-            preserveStandaloneUnit: true)
+            preferred: preferred, preserveStandaloneUnit: true)
         {
             return replacingExpression(
                 quantity, with: "\(quantity.expression) \(operatorText)")
@@ -199,7 +202,8 @@ enum CalcEngine {
 
         // A conversion's echo drops its target, so echo the typed text; the badges name both.
         if let complete = evaluate(
-            tokenQuery(prefixTokens), now: now, calendar: calendar, rates: rates, region: region)
+            tokenQuery(prefixTokens), now: now, calendar: calendar, rates: rates, region: region,
+            preferred: preferred)
         {
             return replacingExpression(complete, with: CalcFormatter.expression(query))
         }

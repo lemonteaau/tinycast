@@ -29,6 +29,16 @@ struct ForkCalculatorTests {
         // The explicit connectors keep their meaning beside the shorthand.
         expectDisplay("610 aud to cny", "2,867.00 CNY")
         expectDisplay("10 usd in cad", "13.60 CAD")
+        // A preferred currency answers a bare amount ahead of the region's own.
+        expectDisplay("100 aud", "470.00 CNY", region: "AUD", preferred: "CNY")
+        expectDisplay("1 usd", "7.05 CNY", region: "AUD", preferred: "CNY")
+        expectDisplay("$10 +", "10.00 USD", region: "AUD", preferred: "CNY")
+        expectDisplay("1 usd to eur", "0.92 EUR", region: "AUD", preferred: "CNY")
+        expectDisplay("705 cny", "150.00 AUD", region: "AUD", preferred: "CNY")
+        expectDisplay("705 cny", "100.00 USD", region: "CNY", preferred: "CNY")
+        expectDisplay("705 cny", "705.00 CNY", preferred: "CNY")
+        expectDisplay("1 usd", "1.50 AUD", region: "AUD")
+        expectDisplay("1 usd", "1.50 AUD", region: "AUD", preferred: "ZZZ")
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -49,8 +59,11 @@ struct ForkCalculatorTests {
         rates: ["USD": 1, "EUR": 0.92, "GBP": 0.79, "CAD": 1.36, "AUD": 1.5, "CNY": 7.05],
         fetchedAt: now)
 
-    static func evaluate(_ query: String, rates: CurrencyRates? = fx) -> CalcResult? {
-        CalcEngine.evaluate(query, now: now, calendar: calendar, rates: rates)
+    static func evaluate(
+        _ query: String, rates: CurrencyRates? = fx, region: String? = nil, preferred: String? = nil
+    ) -> CalcResult? {
+        CalcEngine.evaluate(
+            query, now: now, calendar: calendar, rates: rates, region: region, preferred: preferred)
     }
 
     static func check(_ query: String, expected: String, got: String) {
@@ -62,12 +75,17 @@ struct ForkCalculatorTests {
         }
     }
 
-    static func expectDisplay(_ query: String, _ expected: String) {
-        guard case .value(let display, _)? = evaluate(query)?.payload else {
-            check(query, expected: expected, got: "nil / error")
+    static func expectDisplay(
+        _ query: String, _ expected: String, region: String? = nil, preferred: String? = nil
+    ) {
+        let label = [query, region.map { "region \($0)" }, preferred.map { "preferred \($0)" }]
+            .compactMap { $0 }.joined(separator: " · ")
+        let result = evaluate(query, region: region, preferred: preferred)
+        guard case .value(let display, _)? = result?.payload else {
+            check(label, expected: expected, got: "nil / error")
             return
         }
-        check(query, expected: expected, got: display)
+        check(label, expected: expected, got: display)
     }
 
     static func expectCopy(_ query: String, _ expected: String) {
