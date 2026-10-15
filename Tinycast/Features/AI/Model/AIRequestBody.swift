@@ -30,7 +30,9 @@ enum AIRequestBody {
         if let effort = configuration.effort {
             if configuration.provider == .openRouter {
                 body["reasoning"] = ["effort": effort]
-            } else {
+            } else if effort != AIConnection.ReasoningOptions.providerDefault,
+                effort != AIConnection.ReasoningOptions.noEffort
+            {
                 body["reasoning_effort"] = effort
             }
         }
