@@ -215,24 +215,27 @@ struct RootPaletteView: View {
             header: title,
             items: [
                 PopoverMenuItem(
-                    title: "Changelog",
+                    title: String(localized: "Changelog"),
                     systemImage: "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
                 ) {
                     if let url = URL(string: "https://github.com/abue-ammar/tinycast/releases") {
                         openURL(url)
                     }
                 },
-                PopoverMenuItem(title: "About Tinycast", systemImage: "info.circle") {
+                PopoverMenuItem(title: String(localized: "About Tinycast"), systemImage: "info.circle") {
                     core.settingsCoordinator.showAbout()
                 },
-                PopoverMenuItem(title: "Support Tinycast", systemImage: "heart") {
+                PopoverMenuItem(title: String(localized: "Support Tinycast"), systemImage: "heart") {
                     core.supportCoordinator.showSupport()
                 },
-                PopoverMenuItem(title: "Settings", systemImage: "gearshape", shortcut: "⌘,") {
+                PopoverMenuItem(
+                    title: String(localized: "Settings"), systemImage: "gearshape", shortcut: "⌘,"
+                ) {
                     core.settingsCoordinator.showSettings()
                 },
                 PopoverMenuItem(
-                    title: "Quit \(appName)", systemImage: "rectangle.portrait.and.arrow.right",
+                    title: String(localized: "Quit \(appName)"),
+                    systemImage: "rectangle.portrait.and.arrow.right",
                     isDestructive: true
                 ) {
                     NSApp.terminate(nil)
@@ -255,7 +258,7 @@ struct RootPaletteView: View {
                 popover: filtered.content, selection: $menuSelection,
                 visibleRows: Theme.Size.appMenuVisibleRows,
                 search: PopoverMenu.Search(
-                    placeholder: "Search for actions…", placement: .bottom),
+                    placeholder: String(localized: "Search for actions…"), placement: .bottom),
                 onActivate: activateMenuItem, preferredSelection: filtered.bestMatch)
         case .clipboardFilter:
             return headerMenu(
@@ -397,7 +400,7 @@ struct RootPaletteView: View {
             .modifier(PaletteHideObserver { if menuOpen { closeMenus() } })
             .onChange(of: vm.query) {
                 if vm.collapseQueryLineBreaks() { return }
-                land(restoringNavigation: true)
+                land(restoringSelection: true)
                 if vm.mode == .fileSearch { fileSearch.search(vm.query, filter: vm.fileSearchFilter) }
                 if vm.mode == .launcher { core.fileSearchCoordinator.searchFromLauncher(vm.query) }
                 if vm.mode == .dictionary { dictionary.lookUp(vm.query) }
@@ -415,7 +418,7 @@ struct RootPaletteView: View {
             }
             .modifier(ExtensionSelectionForwarder(screen: extensionScreen, selection: vm.selection))
             // A narrower list means the old index points at a different row, or at none.
-            .onChange(of: vm.clipboardFilter) { land() }
+            .onChange(of: vm.clipboardFilter) { land(restoringSelection: true) }
             // The filter is part of the query, so narrowing re-runs it rather than thinning rows.
             .onChange(of: vm.fileSearchFilter) {
                 land()
@@ -427,7 +430,7 @@ struct RootPaletteView: View {
                 vm.emojiCategoryFilter = .all
                 vm.emojiGridColumnsOverride = nil
                 if menuOpen { closeMenus() }
-                land(restoringNavigation: true)
+                land(restoringSelection: true)
                 searchFocused = !screen.hidesSearchField
                 if vm.mode != .uninstall { uninstall.cancel() }
                 // Entering with no query is the blank screen's own request for recents.
@@ -566,7 +569,6 @@ struct RootPaletteView: View {
                 return screen.pasteKeepingWindowOpen(at: selection) ? .handled : .ignored
             }
             .onKeyPress(.escape) {
-                if menuPanel.isClosing { return .handled }
                 // An open control list owns Escape before the palette beneath it.
                 if vm.isControlListOpen { return .ignored }
                 switch PaletteEscapeAction.resolve(
@@ -603,7 +605,7 @@ struct RootPaletteView: View {
             }
             .modifier(
                 ExtensionShortcutKeys(
-                    screen: menuOpen ? nil : screen as? ExtensionCommandScreen, selection: sel)
+                    screen: { menuOpen ? nil : screen as? ExtensionCommandScreen }, selection: sel)
             )
             .onKeyPress(phases: .down) { press in
                 guard press.modifiers.contains(.command),
@@ -710,7 +712,8 @@ struct RootPaletteView: View {
                 headerGutter(width: metrics.spacing.md)
                 HeaderMenuButton(
                     title: vm.fileSearchFilter.title, systemImage: vm.fileSearchFilter.systemImage,
-                    isOpen: openMenu == .fileSearchFilter, help: "Filter by type  ⌘P",
+                    isOpen: openMenu == .fileSearchFilter,
+                    help: String(localized: "Filter by type  ⌘P"),
                     action: toggleFileSearchFilter)
             }
             if !isCollapsed, vm.mode == .emoji {
@@ -719,7 +722,7 @@ struct RootPaletteView: View {
                     title: vm.emojiCategoryFilter.title,
                     systemImage: vm.emojiCategoryFilter.systemImage,
                     isOpen: openMenu == .emojiCategory,
-                    help: "Filter by category  ⌘P",
+                    help: String(localized: "Filter by category  ⌘P"),
                     action: toggleEmojiCategory)
             }
             if !isCollapsed, vm.mode == .ai {
@@ -793,15 +796,11 @@ struct RootPaletteView: View {
                 Text("Quick AI")
                     .font(metrics.typography.bar)
                     .foregroundStyle(Theme.Colors.textSecondary)
-                SymbolImage(
-                    name: CommandID.quickAI.sfSymbol,
-                    size: metrics.scaled(Theme.Typography.menuSymbolSize), monochrome: true
-                )
-                .foregroundStyle(Theme.Colors.textSecondary)
-                .accessibilityHidden(true)
+                KeyCapChip(text: "⇥", style: .outline)
+                    .accessibilityHidden(true)
             }
         }
-        .help("Ask Quick AI")
+        .help("Press Tab to ask Quick AI")
     }
 
     /// Resolved through `PaletteTabAction`, so the hint cannot promise the wrong destination.
@@ -1089,7 +1088,7 @@ struct RootPaletteView: View {
         let filtered = popover.matching(ActionMenuSearchQuery(vm.menuQuery))
         return PaletteMenuContent(
             popover: filtered.content, selection: $menuSelection, width: width,
-            search: PopoverMenu.Search(placeholder: "Search…", placement: .top),
+            search: PopoverMenu.Search(placeholder: String(localized: "Search…"), placement: .top),
             onActivate: activateMenuItem, preferredSelection: filtered.bestMatch,
             extraRowsHeight: extraRowsHeight)
     }
@@ -1139,12 +1138,11 @@ struct RootPaletteView: View {
         if presenting, let hostWindow {
             menuPanel.show(
                 view, corner: corner, parent: hostWindow, core: core,
-                clipPath: content.clipPath, motion: content.motion,
+                clipPath: content.clipPath,
                 onKeyDown: handleMenuPanelKey, onDismiss: closeMenus)
         } else {
             menuPanel.update(
-                view, corner: corner, core: core, clipPath: content.clipPath,
-                motion: content.motion)
+                view, corner: corner, core: core, clipPath: content.clipPath)
         }
     }
 
@@ -1270,8 +1268,8 @@ struct RootPaletteView: View {
     // MARK: - Actions
 
     /// Every reset lands here, so handlers that fire together agree in whatever order they run.
-    private func land(restoringNavigation: Bool = false) {
-        let restored = restoringNavigation ? vm.restoredSelection : nil
+    private func land(restoringSelection: Bool = false) {
+        let restored = restoringSelection ? vm.restoredSelection : nil
         let landing = restored.map { min($0, max(screen.rows.count - 1, 0)) } ?? screen.landingSelection
         vm.selection = landing
         scroll = ScrollIntent(kind: restored != nil ? .follow : landing == 0 ? .top : .center)
@@ -1439,8 +1437,9 @@ struct RootPaletteView: View {
 
     /// Never promises a step the click does not take: a root screen closes rather than backs.
     private var backHelp: String {
-        let escape = hasBackStep ? "Esc to go back" : "Esc to close"
-        return "\(escape) or ⌘ Esc to go to root search"
+        hasBackStep
+            ? String(localized: "Esc to go back or ⌘ Esc to go to root search")
+            : String(localized: "Esc to close or ⌘ Esc to go to root search")
     }
 
     private func goBack() {

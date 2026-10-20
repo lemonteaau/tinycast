@@ -30,7 +30,9 @@ struct DictionaryScreen: PaletteScreen {
         return entry.map { [.definition($0)] } ?? []
     }
 
-    var primaryActionTitle: String { term.isEmpty ? "Look Up Word" : "Copy Definition" }
+    var primaryActionTitle: String {
+        term.isEmpty ? String(localized: "Look Up Word") : String(localized: "Copy Definition")
+    }
 
     private func row(at selection: Int) -> Row? {
         let currentRows = rows
@@ -49,12 +51,12 @@ struct DictionaryScreen: PaletteScreen {
                 header: entry.term,
                 items: [
                     PopoverMenuItem(
-                        title: "Copy Definition", systemImage: "doc.on.doc", shortcut: "↵"
+                        title: String(localized: "Copy Definition"), systemImage: "doc.on.doc", shortcut: "↵"
                     ) {
                         core.dictionaryCoordinator.copy(entry)
                     },
                     PopoverMenuItem(
-                        title: "Open in Dictionary", systemImage: "book", shortcut: "⌘↵"
+                        title: String(localized: "Open in Dictionary"), systemImage: "book", shortcut: "⌘↵"
                     ) {
                         core.dictionaryCoordinator.openInDictionary(entry)
                     }
@@ -105,13 +107,13 @@ struct DictionaryScreen: PaletteScreen {
     func body(selection: Int, scroll: ScrollIntent) -> AnyView {
         if term.isEmpty {
             guard !history.entries.isEmpty else {
-                return AnyView(EmptyResults(text: "Type a word to define"))
+                return AnyView(EmptyResults(text: String(localized: "Type a word to define")))
             }
             let selected = historyEntry(at: selection)
             return AnyView(
                 DictionaryHistoryList(
                     results: history.entries,
-                    sectionTitle: "Recent Lookups",
+                    sectionTitle: String(localized: "Recent Lookups"),
                     selectedID: selected?.id,
                     scroll: scroll,
                     onSelect: { item in
@@ -126,7 +128,9 @@ struct DictionaryScreen: PaletteScreen {
                     }))
         }
         if let entry { return AnyView(DictionaryEntryView(entry: entry)) }
-        if session.lookup?.term == term { return AnyView(EmptyResults(text: "No definition found")) }
+        if session.lookup?.term == term {
+            return AnyView(EmptyResults(text: String(localized: "No definition found")))
+        }
         return AnyView(Color.clear)
     }
 }

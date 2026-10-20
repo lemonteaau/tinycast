@@ -37,7 +37,7 @@ enum CalcCurrency {
         case unavailable
     }
 
-    static let categoryName = "Currency"
+    static let categoryName = String(localized: "Currency")
 
     static func parseConversion(_ tokens: [CalcToken], rates: CurrencyRates?) -> ConversionParse? {
         let tokens = amountFirst(tokens)

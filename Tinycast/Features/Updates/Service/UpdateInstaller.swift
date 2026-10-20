@@ -10,10 +10,10 @@ struct UpdateInstaller: Sendable {
         var message: String {
             switch self {
             case .downloading(let received, let expected):
-                return "Downloading… \(Self.size(received)) of \(Self.size(expected))"
-            case .extracting: return "Expanding…"
-            case .verifying: return "Verifying…"
-            case .replacing: return "Replacing Tinycast…"
+                return String(localized: "Downloading… \(Self.size(received)) of \(Self.size(expected))")
+            case .extracting: return String(localized: "Expanding…")
+            case .verifying: return String(localized: "Verifying…")
+            case .replacing: return String(localized: "Replacing Tinycast…")
             }
         }
 
@@ -92,13 +92,13 @@ struct UpdateInstaller: Sendable {
         let found = info?["CFBundleShortVersionString"] as? String
         guard found == release.version.upstreamVersion else {
             throw UpdateFailure.versionMismatch(
-                expected: release.version.upstreamVersion, found: found ?? "unknown")
+                expected: release.version.upstreamVersion, found: found ?? String(localized: "unknown"))
         }
         let revision = (info?["CFBundleVersion"] as? String).flatMap(Int.init)
         guard revision == release.version.fork else {
             throw UpdateFailure.versionMismatch(
                 expected: release.version.description,
-                found: "\(found ?? "unknown")-fork.\(revision ?? -1)")
+                found: "\(found ?? String(localized: "unknown"))-fork.\(revision ?? -1)")
         }
         guard BundleSignature.isTrusted(staged) else { throw UpdateFailure.identityMismatch }
     }
