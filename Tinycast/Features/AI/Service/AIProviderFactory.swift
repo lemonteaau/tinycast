@@ -72,13 +72,21 @@ enum AIProviderFactory {
                 throw AIProviderError.unavailable(
                     String(localized: "The API key could not be read from Keychain."))
             }
-            guard AIEndpointPolicy.isLoopback(connection.baseURL) || !key.isEmpty else {
+            let headers: [String: String]
+            do {
+                headers = try KeychainSecretStore.aiRequestHeaders.values(for: connection.id)
+            } catch {
+                throw AIProviderError.unavailable(
+                    String(localized: "The request headers could not be read from Keychain."))
+            }
+            guard AIEndpointPolicy.isLoopback(connection.baseURL) || !key.isEmpty || !headers.isEmpty
+            else {
                 throw AIProviderError.unavailable(String(localized: "Add an API key in Settings."))
             }
             let effort = connection.offeredEffort(savedEffort, for: model)
             return HTTPAIProvider(
                 configuration: connection.httpConfiguration(
-                    baseURL: baseURL, model: model, effort: effort),
+                    baseURL: baseURL, model: model, effort: effort, headers: headers),
                 apiKey: key)
         }
     }

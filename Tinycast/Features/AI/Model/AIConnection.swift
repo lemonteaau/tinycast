@@ -130,16 +130,20 @@ struct AIConnection: Codable, Equatable, Identifiable, Sendable {
     }
 
     /// Only an effort the catalog listed is ever named; the synthesized `default` never is.
-    func httpConfiguration(baseURL: URL, model: String, effort: String?) -> AIHTTPConfiguration {
+    func httpConfiguration(
+        baseURL: URL, model: String, effort: String?, headers: [String: String] = [:]
+    ) -> AIHTTPConfiguration {
         if provider == .openRouter || takesThinkingField, let catalog = reasoningOptions?[model] {
             let resolved = catalog.resolvedEffort(effort)
             return AIHTTPConfiguration(
                 provider: provider, baseURL: baseURL, model: model, effort: resolved,
-                disablesThinking: resolved == ReasoningOptions.noEffort && takesThinkingField)
+                disablesThinking: resolved == ReasoningOptions.noEffort && takesThinkingField,
+                headers: headers)
         }
         return AIHTTPConfiguration(
             provider: provider, baseURL: baseURL, model: model,
-            disablesThinking: effort == ReasoningOptions.noEffort && takesThinkingField)
+            disablesThinking: effort == ReasoningOptions.noEffort && takesThinkingField,
+            headers: headers)
     }
 
     var title: String {
@@ -378,16 +382,18 @@ struct AIHTTPConfiguration: Equatable, Sendable {
     let model: String
     let effort: String?
     let disablesThinking: Bool
+    let headers: [String: String]
 
     init(
         provider: AIProviderKind, baseURL: URL, model: String, effort: String? = nil,
-        disablesThinking: Bool = false
+        disablesThinking: Bool = false, headers: [String: String] = [:]
     ) {
         self.provider = provider
         self.baseURL = baseURL
         self.model = model
         self.effort = effort
         self.disablesThinking = disablesThinking
+        self.headers = headers
     }
 
     var shape: APIShape { provider.apiShape }
