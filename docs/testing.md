@@ -113,6 +113,7 @@ If a change touches anything in the right column, the harness on the left is man
 | `file-search-session-test` | serialized query execution, coalescing, cancellation and refresh |
 | `menu-search-test` | `MenuSearch/Model/` decisions, `MenuSearch/Service/` session filtering, the shared `FuzzyMatch` scorer |
 | `action-menu-search-test` | Action-menu query normalization and shared fuzzy matching |
+| `app-installation-test` | Multiple app copies and app-wide preferences; file-favorite persistence, mixed ordering, hidden slots and restoration through the existing favorite key list |
 | `ranking-test` | `Launcher/Model/LauncherRankingStore.swift` |
 | `scopes-test` | `Launcher/Model/SearchScopes.swift` |
 | `app-name-test` | `Platform/AppDisplayName.swift` — every path that names a scanned bundle |
@@ -141,8 +142,9 @@ If a change touches anything in the right column, the harness on the left is man
 | `palette-menu-click-test` | `Palette/PalettePanel.swift` — complete click-away presses and subsequent control activation |
 | `hyper-key-engine-test` | Hyper chord transitions for every physical key, device-bit holds, own-bit and other-Shift residue, released modifiers, the Quick Press rule, repeats and interruption recovery |
 | `hotkey-test` | `HotKeys/Model/DoubleTapModifier.swift`, `DoubleTapDetector.swift`, `ModifierKey.swift`, `ModifierKeyDetector.swift`, `HotKeyBinding.swift`, `HotKeySpelling.swift`, `HyperKey.swift`, `HIDKeyMapping.swift`, `HotKeyAction.swift`, `Service/KeyShortcut.swift`, and the command→action mapping in `Launcher/Model/CommandID.swift` |
-| `hyper-key-test` | `HotKeys/Model/HIDKeyMapping.swift`, `HyperKeyConflictPolicy.swift`, `Service/KeyboardRemapper.swift`, `HyperKeyInstanceLock.swift` — mapping ownership, refused writes, crash recovery, device reconnection, Caps Lock and 🎤 remaps sharing a keyboard, conflict severities, Modifier Keys and Karabiner parsing, another app taking over Caps Lock, one process per Hyper Key |
+| `hyper-key-test` | `HotKeys/Model/HIDKeyMapping.swift`, `HyperKeyConflictPolicy.swift`, `Service/KeyboardRemapper.swift`, `RemapInstanceLock.swift` — mapping ownership, refused writes, crash recovery, device reconnection, Caps Lock and 🎤 remaps sharing a keyboard, conflict severities, Modifier Keys and Karabiner parsing, another app taking over Caps Lock, one process per Hyper Key |
 | `hotkey-dispatch-test` | `HotKeys/Service/HotKeyManager.swift` — Secure Input side isolation, shared Control registrations, press/release routing, recording and cancellation; isolated preferences and simulated Carbon registration |
+| `dictation-key-test` | `HotKeys/Service/DictationKeyManager.swift` — shared and separate preference domains, ownership handoff through the real health ticker, and retry cancellation on unbind or termination; isolated preferences, lock files and simulated keyboards |
 | `dictation-test` | `Dictation/Model/DictationModel.swift`, `DictationTextFormatter.swift` — model paths and text formatting |
 | `dictation-field-test` | Composer rebinding and teardown, field-scoped dictation cancellation, and queued insertion validity; synthetic capture and real AppKit editors |
 | `dictation-cue-test` | System dictation sound paths, stop-before-play ordering and missing resources, without playing audio |
@@ -442,7 +444,8 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - Compact mode: typing expands it, and the search bar does **not** shift vertically during the swap
 - Compact mode: the opening frames show no shortcut fill beneath the query before the buttons emerge
 - Compact mode: configure zero through four unique shortcuts, replace/remove them and move them up/down;
-  disabling a feature hides its button without losing its configured position
+  disabling a feature hides its button without losing its configured position, and Settings marks
+  it Off in the list and lists it under Off in both menus
 - Compact mode: Left/Right traverses Search and the visible buttons without wrapping; Down expands
   Search or opens a selected shortcut, Return opens only a shortcut, and typing/pasting starts Search
 - Compact mode: Escape at expanded root clears text, then collapses, then closes under both preferences
@@ -748,6 +751,9 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
 - ⌥⌘C and ⇧⌘B toggle a code block and a quote; with Render Markdown off they do nothing special
 - Settings > Notes > Show Formatting Bar is disabled while Render Markdown is off, Settings search for
   "formatting" lands on it, and a backup round trip restores it
+- With Show in Menu Bar on, the Notes icon appears at once; a click shows Notes and a second click
+  hides it, and right-, Control- and Option-click open Create Note and Search Notes. Turning the
+  setting or Notes off removes the icon, and a ⌘-dragged position survives a relaunch
 - With VoiceOver, the bar reads as "Formatting" with each button named, lit ones as selected, the round
   button announcing Expanded or Collapsed, and the heading button its level; menu rows read their titles
   and the current one as selected
@@ -850,6 +856,20 @@ caches, TCC grants and login item, so this cannot disturb an installed copy.
   the five appears in Settings ▸ Commands
 - Export with auto join and camera preview on, import onto a clean profile: both come back **off**,
   while the menu-bar settings carry over
+
+### File favorites
+
+- In Search Files, use ⌘K → Add to Favorites on a folder and ⇧⌘F on a file. Open root search with an
+  empty query: both appear with app favorites in insertion order, including after relaunch.
+- Move files and apps across each other with ⌥⌘↑/↓ and the matching menu actions; selection follows
+  the moved row. Remove a favorite through either path; selection stays within Favorites.
+- Hold ⌘ and check that each displayed ⌘1–⌘0 opens that favorite, including with the meeting card
+  above Favorites and from the compact palette.
+- Search for a saved filename, including a short query and accented text: the favorite appears once.
+  Turn Show in launcher off: saved files remain available; disable File Search: they disappear.
+  Re-enable it: their order returns.
+- Export and import settings: the mixed order survives. Move or remove a saved file: opening reports
+  the failure and Remove from Favorites still works.
 
 ### System actions and window management
 
