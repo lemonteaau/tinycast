@@ -394,7 +394,7 @@ struct RootPaletteView: View {
     /// Split from `body` for the same reason `keyHandlers` is: one chain cannot carry them all.
     @ViewBuilder
     private func stateObservers(_ content: some View) -> some View {
-        emojiObservers(content)
+        lifecycleObservers(emojiObservers(content))
             // Every show bumps focusToken so the search field refocuses.
             .onChange(of: vm.focusToken) {
                 resetCompactSelection()
@@ -467,6 +467,12 @@ struct RootPaletteView: View {
                     Task { await extensions.stop() }
                 }
             }
+    }
+
+    /// The token, menu and lifecycle half of `stateObservers`; Xcode 26 can't type-check both as one.
+    @ViewBuilder
+    private func lifecycleObservers(_ content: some View) -> some View {
+        content
             // `prepare` may change nothing else, so this still lands the list as freshly opened.
             .onChange(of: vm.resetToken) {
                 if menuOpen { closeMenus() }
