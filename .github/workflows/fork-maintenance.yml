@@ -170,7 +170,13 @@ jobs:
           STAGE=$(mktemp -d)
           cp -R "$APP" "$STAGE/"
           ln -s /Applications "$STAGE/Applications"
-          hdiutil create -srcfolder "$STAGE" -volname Tinycast -format UDZO "dist/Tinycast-$VERSION.dmg"
+          # Hosted runners intermittently answer "Resource busy"; a retry is enough.
+          for attempt in 1 2 3 4 5; do
+            hdiutil create -srcfolder "$STAGE" -volname Tinycast -format UDZO "dist/Tinycast-$VERSION.dmg" && break
+            test "$attempt" -lt 5
+            rm -f "dist/Tinycast-$VERSION.dmg"
+            sleep $((attempt * 5))
+          done
           (cd dist && shasum -a 256 ./*.zip ./*.dmg > SHA256SUMS.txt)
 
       - name: Push tested merge and publish release
