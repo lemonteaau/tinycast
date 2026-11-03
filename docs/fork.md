@@ -55,6 +55,9 @@ Where it reaches past [dictionary.md](features/dictionary.md):
   stores and sessions [architecture.md](architecture.md) lists.
 - **Commands.** Dictionary History is a command no feature switch governs, so Settings › Commands
   lists it beside Calculator History.
+- **Deep links.** Dictionary History only opens a Tinycast screen, so `DeepLinkConsentPolicy` classes
+  it with Calculator History as never asking without input. It is not one of the search screens
+  [deeplinks.md](features/deeplinks.md) lists, so it does not take a link's input.
 - **Backups.** Dictionary history never travels in a Tinycast backup or a Raycast import, as AI chat
   history does not: looked-up words stay on the Mac that had them.
 
