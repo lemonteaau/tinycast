@@ -375,7 +375,9 @@ run dictionary-history-test Tinycast/Features/Dictionary/Model/DictionaryHistory
                             Tinycast/Features/Dictionary/Service/DictionaryHistoryStore.swift \
                             Tinycast/Platform/AppPaths.swift
 run fork-calculator-test   Tinycast/Features/Calculator/Model/*.swift
-run fork-updates-test      Tinycast/Features/Updates/Model/*.swift
+run fork-updates-test      Tinycast/Features/Updates/Model/*.swift \
+                           Tinycast/Features/Updates/Service/BundleSignature.swift \
+                           Tinycast/Features/Updates/Service/ForkBundleSignature.swift
 run fork-palette-test      Tinycast/Palette/PaletteMode.swift \
                            Tinycast/Palette/PaletteEscapeAction.swift \
                            Tinycast/Palette/PaletteFilterAction.swift \

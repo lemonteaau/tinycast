@@ -34,8 +34,9 @@ for BIN in "$APP/Contents/MacOS/$NAME" "$APP/Contents/Helpers/ClipboardTextHelpe
     INFO="$(codesign -dv --verbose=2 "$BIN" 2>&1)"
     [[ "$INFO" =~ flags=0x[0-9a-f]+\([^\)]*runtime ]] ||
         fail "${BIN##*/}: hardened runtime not enabled"
-    [[ "$INFO" == *$'\nAuthority=Developer ID Application: '* && "$INFO" == *$'\nTimestamp='* ]] ||
-        fail "${BIN##*/}: not signed with a timestamped Developer ID"
+    # This fork signs with its own self-signed identity and no timestamp; see docs/fork.md.
+    [[ "$INFO" == *$'\nAuthority=Tinycast Fork lemonteaau\n'* ]] ||
+        fail "${BIN##*/}: not signed with the fork identity"
 done
 
 APP_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP/Contents/Info.plist")"

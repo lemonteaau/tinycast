@@ -20,6 +20,7 @@ struct ForkUpdatesTests {
         parsesForkVersions()
         ordersForkVersions()
         keepsForkReleasesOnStable()
+        refusesBundlesWithoutASigningCertificate()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -65,5 +66,36 @@ struct ForkUpdatesTests {
             """.utf8)
         let fork = ReleaseFeed.newest(from: feed, channel: .stable, architecture: .appleSilicon)
         expect(fork?.version == AppVersion("0.11.3-fork.3"), "fork release stays on the stable feed")
+    }
+
+    /// The harness itself has no leaf, so two certificate-less bundles must not count as matching.
+    static func refusesBundlesWithoutASigningCertificate() {
+        let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = root.appending(components: "Probe.app")
+        let macOS = app.appending(components: "Contents", "MacOS")
+        let binary = macOS.appending(path: "Probe")
+        do {
+            try FileManager.default.createDirectory(at: macOS, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: URL(filePath: "/usr/bin/true"), to: binary)
+        } catch {
+            expect(false, "the probe bundle could not be built: \(error)")
+            return
+        }
+        expect(!ForkBundleSignature.isTrusted(root), "a plain folder is not a trusted bundle")
+
+        let signer = Process()
+        signer.executableURL = URL(filePath: "/usr/bin/codesign")
+        signer.arguments = ["--force", "--sign", "-", app.path]
+        signer.standardError = FileHandle.nullDevice
+        do {
+            try signer.run()
+            signer.waitUntilExit()
+        } catch {
+            expect(false, "codesign could not run: \(error)")
+            return
+        }
+        expect(signer.terminationStatus == 0, "the probe bundle signs ad hoc")
+        expect(!ForkBundleSignature.isTrusted(app), "a valid ad hoc seal carries no trusted leaf")
     }
 }

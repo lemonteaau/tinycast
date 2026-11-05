@@ -254,6 +254,14 @@ running app's signing certificate against the new one. A new identity requires a
 installation and permission grant. CI imports the identity into a temporary keychain, verifies both
 the app and helper signatures, then deletes the keychain. No private key belongs in Git.
 
+Upstream moved to Developer ID and notarization, so two of its checks would refuse every fork build
+and are adapted here. `Scripts/verify-signature.sh` asserts this identity where upstream asserts a
+timestamped Developer ID. [updates.md](features/updates.md)'s Developer ID requirement stays in
+`BundleSignature` as upstream's, and `UpdateInstaller` asks `ForkBundleSignature` instead, which also
+accepts a sealed bundle carrying the byte-identical leaf certificate the running app does. Without
+that second path a fork build would install and then refuse every later update. `fork-updates-test`
+covers the refusals.
+
 The upstream development and signing documents describe the upstream project; this file and
 `fork-maintenance.yml` define this fork's release process. Local development still uses the separate
 Debug bundle `Tinycast Dev.app`, or can build unsigned with `CODE_SIGNING_ALLOWED=NO`.

@@ -1,0 +1,42 @@
+import Foundation
+import Security
+
+/// Fork releases are self-signed, so `BundleSignature` alone would refuse every one of them.
+enum ForkBundleSignature {
+    static func isTrusted(_ bundleURL: URL) -> Bool {
+        BundleSignature.isTrusted(bundleURL) || carriesRunningLeaf(bundleURL)
+    }
+
+    /// The same leaf, and only once the seal holds: an unsealed bundle can claim any identity.
+    private static func carriesRunningLeaf(_ bundleURL: URL) -> Bool {
+        var staticCode: SecStaticCode?
+        guard SecStaticCodeCreateWithPath(bundleURL as CFURL, [], &staticCode) == errSecSuccess,
+            let staticCode
+        else { return false }
+        let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSCheckNestedCode)
+        guard SecStaticCodeCheckValidity(staticCode, flags, nil) == errSecSuccess else { return false }
+        guard let running = runningLeaf(), let candidate = leaf(of: staticCode) else { return false }
+        return running == candidate
+    }
+
+    private static func runningLeaf() -> Data? {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code else { return nil }
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess, let staticCode else {
+            return nil
+        }
+        return leaf(of: staticCode)
+    }
+
+    private static func leaf(of code: SecStaticCode) -> Data? {
+        var information: CFDictionary?
+        let flags = SecCSFlags(rawValue: kSecCSSigningInformation)
+        guard SecCodeCopySigningInformation(code, flags, &information) == errSecSuccess,
+            let dictionary = information as? [String: Any],
+            let certificates = dictionary[kSecCodeInfoCertificates as String] as? [SecCertificate],
+            let leaf = certificates.first
+        else { return nil }
+        return SecCertificateCopyData(leaf) as Data
+    }
+}

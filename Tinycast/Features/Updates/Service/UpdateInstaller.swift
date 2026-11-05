@@ -101,7 +101,7 @@ struct UpdateInstaller: Sendable {
                 expected: release.version.description,
                 found: "\(found ?? String(localized: "unknown"))-fork.\(revision ?? -1)")
         }
-        guard BundleSignature.isTrusted(staged) else { throw UpdateFailure.identityMismatch }
+        guard ForkBundleSignature.isTrusted(staged) else { throw UpdateFailure.identityMismatch }
     }
 
     /// Off disk, not through `Bundle`, whose cache would answer for the old copy.
