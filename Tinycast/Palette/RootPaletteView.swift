@@ -221,7 +221,7 @@ struct RootPaletteView: View {
                     title: String(localized: "Changelog"),
                     systemImage: "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
                 ) {
-                    if let url = URL(string: "https://github.com/abue-ammar/tinycast/releases") {
+                    if let url = URL(string: "https://tinycast.dev/changelog/") {
                         openURL(url)
                     }
                 },
@@ -348,8 +348,11 @@ struct RootPaletteView: View {
                 )
                 // The window's frame is the size source, so the glass and clip stay matched.
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                // Hidden rather than unmounted, so expanding never shows a frame without glass.
-                .background(GlassEffectView().opacity(isCollapsed ? 0 : 1))
+                // Identity rather than removed, so expanding never rebuilds the tree it sits on.
+                .glassEffect(
+                    isCollapsed ? .identity : .regular,
+                    in: RoundedRectangle(cornerRadius: metrics.radius.panel, style: .continuous)
+                )
                 .overlay {
                     Theme.Colors.dialogDimming
                         .opacity(core.isDimmingPaletteForDialog && !isCollapsed ? 1 : 0)
@@ -361,6 +364,7 @@ struct RootPaletteView: View {
                             ? Theme.Duration.dialogEnter : Theme.Duration.dialogExit),
                     value: core.isDimmingPaletteForDialog
                 )
+                // Also the window's shape: without it, macOS shadows the default window outline.
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: isCollapsed ? 0 : metrics.radius.panel, style: .continuous
@@ -854,7 +858,9 @@ struct RootPaletteView: View {
                     accessory, isOpen: openMenu == .extensionAccessory,
                     action: toggleExtensionSearchAccessory)
             }
-            headerGutter(width: metrics.spacing.md * 2)
+            if isCollapsed { UpdatePill() }
+            // The slack above and below, so the pill stays concentric with the capsule.
+            headerGutter(width: isCollapsed ? metrics.size.headerPadding : metrics.spacing.md * 2)
         }
         // Identical metrics in both states, so typing can't move the search bar.
         .frame(height: metrics.size.headerHeight)
@@ -1000,8 +1006,11 @@ struct RootPaletteView: View {
     ) -> some View {
         // Floating controls, no bar; the edge dissolve ghosts the rows passing beneath.
         HStack(spacing: 0) {
-            appMenuButton
-                .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
+            HStack(spacing: 0) {
+                appMenuButton
+                UpdatePill()
+            }
+            .modifier(ExtensionToastSlot(extensions: extensions, showing: vm.mode == .extensionCommand))
             if showActionGroup {
                 actionGroup(
                     pillLabel: pillLabel, formPrimaryShortcut: formPrimaryShortcut,

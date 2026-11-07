@@ -7,15 +7,17 @@ enum AIModelDiscovery {
         /// `nil` when the catalog doesn't say; OpenRouter lists `text`, `image`, `file`, `audio`.
         var inputModalities: [String]? = nil
         var reasoningOptions: AIConnection.ReasoningOptions?
+        var maxOutputTokens: Int?
 
         init(
             id: String, name: String, inputModalities: [String]? = nil,
-            reasoningOptions: AIConnection.ReasoningOptions? = nil
+            reasoningOptions: AIConnection.ReasoningOptions? = nil, maxOutputTokens: Int? = nil
         ) {
             self.id = id
             self.name = name
             self.inputModalities = inputModalities
             self.reasoningOptions = reasoningOptions
+            self.maxOutputTokens = maxOutputTokens
         }
 
         var acceptsImages: Bool? { inputModalities?.contains("image") }
@@ -99,7 +101,8 @@ enum AIModelDiscovery {
                     Model(
                         id: $0.id, name: $0.name ?? $0.displayName ?? $0.id,
                         inputModalities: $0.architecture?.inputModalities,
-                        reasoningOptions: $0.reasoningOptions)
+                        reasoningOptions: $0.reasoningOptions,
+                        maxOutputTokens: $0.maxTokens)
                 })
         case .gemini:
             let response = try JSONDecoder().decode(GeminiResponse.self, from: data)
@@ -193,7 +196,7 @@ enum AIModelDiscovery {
             return Model(
                 id: id, name: name.isEmpty ? id : name,
                 inputModalities: model.inputModalities,
-                reasoningOptions: model.reasoningOptions)
+                reasoningOptions: model.reasoningOptions, maxOutputTokens: model.maxOutputTokens)
         }
     }
 
@@ -225,18 +228,49 @@ enum AIModelDiscovery {
             }
         }
 
+        struct Capabilities: Decodable {
+            struct Effort: Decodable {
+                private struct Level: CodingKey {
+                    let stringValue: String
+                    var intValue: Int? { nil }
+                    init(stringValue: String) { self.stringValue = stringValue }
+                    init?(intValue: Int) { nil }
+                }
+
+                private struct Support: Decodable {
+                    let supported: Bool
+                }
+
+                let levels: [String]
+
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: Level.self)
+                    let supported = Set(
+                        container.allKeys.filter {
+                            (try? container.decode(Support.self, forKey: $0))?.supported == true
+                        }.map(\.stringValue))
+                    levels = AIConnection.ReasoningOptions.ladder.filter(supported.contains)
+                }
+            }
+
+            let effort: Effort?
+        }
+
         struct Model: Decodable {
             let id: String
             let name: String?
             let displayName: String?
             let architecture: Architecture?
             let reasoning: Reasoning?
+            let capabilities: Capabilities?
+            let maxTokens: Int?
             let reasoningSupportedEfforts: [String]?
             let reasoningDefaultEffort: String?
 
             enum CodingKeys: String, CodingKey {
-                case id, name, architecture, reasoning
+                case id, name, architecture, reasoning, capabilities
                 case displayName = "display_name"
+                case maxTokens = "max_tokens"
                 case reasoningSupportedEfforts = "reasoning_supported_efforts"
                 case reasoningDefaultEffort = "reasoning_default_effort"
             }
@@ -248,9 +282,10 @@ enum AIModelDiscovery {
                         efforts: reasoning.supportedEfforts ?? [],
                         defaultEffort: reasoning.defaultEffort)
                 }
-                return reasoningSupportedEfforts.map {
-                    .init(efforts: $0, defaultEffort: reasoningDefaultEffort)
+                if let reasoningSupportedEfforts {
+                    return .init(efforts: reasoningSupportedEfforts, defaultEffort: reasoningDefaultEffort)
                 }
+                return capabilities?.effort.map { .init(efforts: $0.levels, defaultEffort: nil) }
             }
 
             // A shape we cannot read is dropped, never the entry.
@@ -261,6 +296,8 @@ enum AIModelDiscovery {
                 displayName = try? container.decodeIfPresent(String.self, forKey: .displayName)
                 architecture = try? container.decodeIfPresent(Architecture.self, forKey: .architecture)
                 reasoning = try? container.decodeIfPresent(Reasoning.self, forKey: .reasoning)
+                capabilities = try? container.decodeIfPresent(Capabilities.self, forKey: .capabilities)
+                maxTokens = try? container.decodeIfPresent(Int.self, forKey: .maxTokens)
                 reasoningSupportedEfforts = try? container.decodeIfPresent(
                     [String].self, forKey: .reasoningSupportedEfforts)
                 reasoningDefaultEffort = try? container.decodeIfPresent(
@@ -279,5 +316,25 @@ enum AIModelDiscovery {
         }
 
         let models: [Model]
+    }
+}
+
+extension AIConnection {
+    mutating func adoptCatalog(_ catalog: [AIModelDiscovery.Model]) {
+        for entry in catalog where models.contains(entry.id) {
+            if let limit = entry.maxOutputTokens {
+                if outputLimits == nil { outputLimits = [:] }
+                outputLimits?[entry.id] = limit
+            }
+            guard reasoningOptions?[entry.id] == nil, let options = entry.reasoningOptions,
+                !options.efforts.isEmpty
+            else { continue }
+            if takesDeclaredLevels {
+                declareLevels(Set(options.efforts), for: entry.id)
+            } else {
+                if reasoningOptions == nil { reasoningOptions = [:] }
+                reasoningOptions?[entry.id] = options
+            }
+        }
     }
 }

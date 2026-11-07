@@ -68,7 +68,7 @@ struct ForkUpdatesTests {
         expect(fork?.version == AppVersion("0.11.3-fork.3"), "fork release stays on the stable feed")
     }
 
-    /// The harness itself has no leaf, so two certificate-less bundles must not count as matching.
+    /// The harness itself has no leaf, so a certificate-less bundle must not meet its requirement.
     static func refusesBundlesWithoutASigningCertificate() {
         let root = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -82,7 +82,9 @@ struct ForkUpdatesTests {
             expect(false, "the probe bundle could not be built: \(error)")
             return
         }
-        expect(!ForkBundleSignature.isTrusted(root), "a plain folder is not a trusted bundle")
+        expect(
+            BundleSignature.trustedHash(of: root, releaseSigned: false) == nil,
+            "a plain folder is not a trusted bundle")
 
         let signer = Process()
         signer.executableURL = URL(filePath: "/usr/bin/codesign")
@@ -96,6 +98,8 @@ struct ForkUpdatesTests {
             return
         }
         expect(signer.terminationStatus == 0, "the probe bundle signs ad hoc")
-        expect(!ForkBundleSignature.isTrusted(app), "a valid ad hoc seal carries no trusted leaf")
+        expect(
+            BundleSignature.trustedHash(of: app, releaseSigned: false) == nil,
+            "a valid ad hoc seal does not meet the running build's requirement")
     }
 }

@@ -87,8 +87,11 @@ enum AIProviderFactory {
             }
             let effort = connection.offeredEffort(savedEffort, for: model)
             return HTTPAIProvider(
-                configuration: connection.httpConfiguration(
-                    baseURL: baseURL, model: model, effort: effort, headers: headers),
+                configuration: AIHTTPConfiguration(
+                    provider: connection.provider, baseURL: baseURL, model: model, effort: effort,
+                    disablesThinking: effort == AIConnection.ReasoningOptions.noEffort
+                        && connection.takesThinkingField,
+                    maxOutputTokens: connection.outputLimits?[model], headers: headers),
                 apiKey: key)
         }
     }

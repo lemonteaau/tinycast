@@ -2,9 +2,8 @@
 
 This is an independently maintained personal fork of
 [abue-ammar/tinycast](https://github.com/abue-ammar/tinycast), under the original AGPL-3.0 license.
-It adds a connector-free currency conversion, a yuan default for bare amounts, a dictionary lookup
-history, catalogued reasoning efforts for AI gateways and a larger content scale, and publishes its
-own signed builds.
+It adds a yuan default for bare amounts, a dictionary lookup history, a flattened reasoning-effort
+catalog for AI gateways and a larger content scale, and publishes its own signed builds.
 
 **Everything the fork changes is documented in this file.** The rest of `docs/`, `website/` and
 `AGENTS.md` are upstream's text, kept identical to upstream so the daily sync cannot conflict in
@@ -12,15 +11,6 @@ them. Where one of them disagrees with a section below, the section below is rig
 [Keeping the sync quiet](#keeping-the-sync-quiet) has the rules that follow from that.
 
 ## What this fork changes
-
-### Currency conversion without a connector
-
-The calculator also accepts an amount followed by two currencies with no connector: `610 aud cny`,
-`10usd cad`, `$10 cad` and `2*5 usd cad`. Both names must resolve to currencies; a bare `usd cad` or
-a mixed `10 usd kg` stays a search. Explicit `to`, `in` and `->` retain their meaning. In
-[calculator.md](features/calculator.md)'s evaluation order this belongs to step 7, currency
-conversion. `fork-calculator-test` covers the shorthand, expressions, signs, missing rates and
-ambiguous input.
 
 ### A bare amount answers in yuan
 
@@ -30,6 +20,10 @@ region: `100 aud` and `1 usd` both answer in CNY, and `100 cny` answers in the r
 upstream's fallback when the region is itself CNY. `PreferredCurrency.code` holds the choice;
 `CalcEngine.evaluate` takes it as a defaulted `preferred`, so upstream's calc-test keeps its region
 rules. Explicit conversions and expressions are unchanged. `fork-calculator-test` covers it.
+
+`fork-calculator-test` also keeps the connector-free shorthand (`610 aud cny`, `10usd cad`,
+`$10 cad`, `2*5 usd cad`) that the fork shipped before upstream adopted the same rule in
+[calculator.md](features/calculator.md)'s currency step; the fork no longer carries code for it.
 
 ### Dictionary history
 
@@ -83,24 +77,15 @@ The manual sweep in [testing.md](testing.md) gains these for the dictionary:
 
 ### Reasoning efforts for AI gateways
 
-Upstream shows reasoning efforts for installed routes and for OpenRouter models whose catalog
-reports them, and gives a gateway only the synthesized `Default` and `None` pair that
-[ai.md](features/ai.md) describes. This fork reads a catalog from any OpenAI-shaped endpoint.
-
-A catalog is a `/models` entry whose `reasoning` lists `supported_efforts`, with an optional
-`default_effort` — OpenRouter's contract, which any OpenAI-shaped endpoint, a gateway included, may
-publish — or the same pair flattened to `reasoning_supported_efforts` and `reasoning_default_effort`,
-as some gateways spell it. The editor keeps it per model for every provider, and refreshes the models
-already added each time discovery loads, so a gateway that starts publishing efforts is picked up by
-reopening and saving its connection. `AIConnection.httpConfiguration` names only a catalogued effort
-— one the catalog no longer lists resolves to its `default_effort` — as OpenRouter's
-`reasoning.effort` there and OpenAI's top-level `reasoning_effort` everywhere else. Of the
-synthesized pair, still only `None` is ever written.
-
-The chat's model switcher therefore offers efforts for any API model whose catalog reports them; a
-gateway with no catalog keeps `Default` and `None`, and other API routes keep their provider default
-because their catalogs publish no efforts. `fork-ai-test` covers the catalogued, stale, uncatalogued
-and flattened cases.
+Upstream now declares reasoning levels per model for every connection but OpenRouter, and
+`adoptCatalog` pre-ticks the levels a `/models` catalog publishes, as [ai.md](features/ai.md)
+describes. It reads OpenRouter's nested `reasoning.supported_efforts` and Anthropic's
+`capabilities.effort`. This fork also reads the same pair flattened to `reasoning_supported_efforts`
+and `reasoning_default_effort`, as some OpenAI-shaped gateways spell it, in
+`AIModelDiscovery`'s OpenAI decoder; a nested `reasoning` object wins when both are present. A
+gateway publishing that spelling therefore gets its levels declared on discovery, and a picked level
+is sent as `reasoning_effort` like any other declared level. `fork-ai-test` covers the decoding and
+the request it leads to.
 
 ### Content scale
 
@@ -254,13 +239,12 @@ running app's signing certificate against the new one. A new identity requires a
 installation and permission grant. CI imports the identity into a temporary keychain, verifies both
 the app and helper signatures, then deletes the keychain. No private key belongs in Git.
 
-Upstream moved to Developer ID and notarization, so two of its checks would refuse every fork build
-and are adapted here. `Scripts/verify-signature.sh` asserts this identity where upstream asserts a
-timestamped Developer ID. [updates.md](features/updates.md)'s Developer ID requirement stays in
-`BundleSignature` as upstream's, and `UpdateInstaller` asks `ForkBundleSignature` instead, which also
-accepts a sealed bundle carrying the byte-identical leaf certificate the running app does. Without
-that second path a fork build would install and then refuse every later update. `fork-updates-test`
-covers the refusals.
+Upstream moved to Developer ID and notarization, so `Scripts/verify-signature.sh` asserts this
+identity where upstream asserts a timestamped Developer ID. The updater needs no fork code: upstream's
+`BundleSignature.trustedHash` demands Developer ID only for a zip carrying a valid `.sig` from its
+release key, and fork releases publish none, so a fork update is checked against the running app's
+own designated requirement, which pins this identity's leaf certificate. `fork-updates-test` covers
+the refusals.
 
 The upstream development and signing documents describe the upstream project; this file and
 `fork-maintenance.yml` define this fork's release process. Local development still uses the separate
